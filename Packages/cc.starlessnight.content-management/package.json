@@ -1,0 +1,22 @@
+{
+    "name": "cc.starlessnight.content-management",
+    "version": "0.0.1",
+    "description": " ",
+    "displayName": "content-management",
+    "unity": "2020.3",
+    
+    "author": {
+        "name": "ialex32x", 
+        "email": "lin_032@hotmail.com"
+    },
+    "keywords": [
+        "resource-management", 
+        "assetbundle"
+    ],
+
+    "repository": {
+      "url": "https://github.com/ialex32x/content-management.git",
+      "type": "git"
+    }
+  }
+  
