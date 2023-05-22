@@ -4,7 +4,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "Content Management"
+        "Iris.ContentManagement.Editor",
+        "Iris.ContentManagement"
     ],
     "includePlatforms": [
         "Editor"
