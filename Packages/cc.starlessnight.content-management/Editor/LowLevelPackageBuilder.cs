@@ -32,7 +32,7 @@ namespace Iris.ContentManagement.Editor
         private List<IPackageSource> _zipArchives = new();
         private Iris.ContentManagement.Internal.ContentLibrary _lib = new();
 
-        [MenuItem("UnityFS/Test")]
+        [MenuItem("UnityFS/LowLevel Package Test")]
         private static void RunTest()
         {
             new LowLevelPackageBuilder().Test();
@@ -72,6 +72,7 @@ namespace Iris.ContentManagement.Editor
 
         private void BuildAssetBundles()
         {
+            // generate assetbundle files
             var builds = new AssetBundleBuild[_assetBundles.Count];
             var outputPath = Path.Combine(_settings.stagingPath, "Win64");
             var options = BuildAssetBundleOptions.AssetBundleStripUnityVersion | BuildAssetBundleOptions.DeterministicAssetBundle | BuildAssetBundleOptions.ChunkBasedCompression;
@@ -89,18 +90,21 @@ namespace Iris.ContentManagement.Editor
             }
             Directory.CreateDirectory(outputPath);
             var manifest = BuildPipeline.BuildAssetBundles(outputPath, builds, options, target);
+
+            // update content library
             for (int packageIndex = 0, count = _assetBundles.Count; packageIndex < count; ++packageIndex)
             {
                 var packageInfo = _assetBundles[packageIndex];
                 var deps = manifest.GetAllDependencies(packageInfo.name + _settings.fileExtension);
-                var libPack = _lib.AddPackage(packageInfo.name + _settings.fileExtension, Internal.EPackageType.AssetBundle, new(), deps);
+                using var fileStream = File.OpenRead(Path.Combine(outputPath, packageInfo.name + _settings.fileExtension));
+                var checksum = Utility.Checksum.ComputeChecksum(fileStream);
+                var digest = new ContentDigest((uint)fileStream.Length, checksum);
+                var libPack = _lib.AddPackage(packageInfo.name + _settings.fileExtension, Internal.EPackageType.AssetBundle, digest, deps);
                 foreach (var path in packageInfo.entries)
                 {
                     _lib.AddEntry(libPack, path);
                 }
             }
-            //TODO encrypt source into the next stage 
-            //TODO calculate checksum
         }
 
         private void BuildZipArchives()
@@ -116,15 +120,23 @@ namespace Iris.ContentManagement.Editor
                 var assetPaths = packageInfo.entries;
                 var outputPath = Path.Combine(dirPath, packageInfo.name + _settings.fileExtension);
                 tasks[packageIndex] = Task.Run(() => FileUtils.CreateZipArchive(outputPath, assetPaths));
-                var libPack = _lib.AddPackage(packageInfo.name + _settings.fileExtension, Internal.EPackageType.Zip, new());
-                foreach (var assetPath in assetPaths)
+            }
+            Task.WaitAll(tasks);
+
+            // update content library
+            for (var packageIndex = 0; packageIndex < packageCount; ++packageIndex)
+            {
+                var packageInfo = _zipArchives[packageIndex];
+                var outputPath = Path.Combine(dirPath, packageInfo.name + _settings.fileExtension);
+                using var fileStream = File.OpenRead(outputPath);
+                var checksum = Utility.Checksum.ComputeChecksum(fileStream);
+                var digest = new ContentDigest((uint)fileStream.Length, checksum);
+                var libPack = _lib.AddPackage(packageInfo.name + _settings.fileExtension, Internal.EPackageType.Zip, digest);
+                foreach (var assetPath in packageInfo.entries)
                 {
                     _lib.AddEntry(libPack, assetPath);
                 }
             }
-            Task.WaitAll(tasks);
-            //TODO encrypt source into the next stage 
-            //TODO calculate checksum
         }
 
         private void BuildContentLibrary()

@@ -62,6 +62,19 @@ namespace Iris.ContentManagement.Utility
             return value;
         }
 
+        public static async System.Threading.Tasks.Task<ushort> ComputeChecksumAsync(Stream stream, ushort value = 0)
+        {
+            const int BufferSize = 256;
+            var crisp = new byte[BufferSize];
+            var read = await stream.ReadAsync(crisp, 0, BufferSize);
+            while (read > 0)
+            {
+                value = ComputeChecksum(crisp, 0, read, value);
+                read = await stream.ReadAsync(crisp);
+            }
+            return value;
+        }
+
         public static ushort ComputeChecksum(byte[] bytes) => ComputeChecksum(bytes, 0, bytes.Length, 0);
 
         public static ushort ComputeChecksum(byte[] bytes, int offset, int count, ushort checksum)

@@ -31,6 +31,8 @@ namespace Iris.ContentManagement.Internal
         /// </summary>
         public int Count => _entries.Count;
 
+        public int PackageCount => _packages.Count;
+
         public ContentLibrary()
         {
             _root = _directories.Add(new DirectoryState(SIndex.None, string.Empty));
@@ -311,5 +313,14 @@ namespace Iris.ContentManagement.Internal
                 fn(new(this, e.Current));
             }
         }
+
+#if UNITY_EDITOR
+        public void SetPackageDigest(in PackageInfo packageInfo, in ContentDigest digest)
+        {
+            ref var state = ref _packages.UnsafeGetValueByRef(packageInfo.index);
+            var newValue = new PackageState(state.name, state.type, digest, state.dependencies);
+            _packages.UnsafeSetValue(packageInfo.index, newValue);
+        }
+#endif
     }
 }

@@ -109,7 +109,7 @@ namespace Iris.ContentManagement.Internal
         {
             var head = reader.ReadLine().Split(',');
             var size = uint.Parse(head[0]);
-            var checksum = new Utility.Checksum(ushort.Parse(head[1]));
+            var checksum = Utility.Checksum.Parse(head[1]);
             var name = head[2];
             var dependencies = new List<string>();
             do

@@ -24,6 +24,8 @@ namespace Iris.ContentManagement
 
         public override string ToString() => $"{size} ({checksum})";
 
+        public static implicit operator string(ContentDigest a) => a.ToString();
+
         public static bool operator ==(ContentDigest a, ContentDigest b) => a.size == b.size && a.checksum == b.checksum;
 
         public static bool operator !=(ContentDigest a, ContentDigest b) => a.size != b.size || a.checksum != b.checksum;
