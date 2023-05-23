@@ -183,7 +183,7 @@ namespace Iris.ContentManagement.Internal
                 {
                     throw new ArgumentException("invalid path, double slash is not allowed");
                 }
-                var childDirectory = directory.Substring(lastIndex, nextIndex);
+                var childDirectory = directory.Substring(lastIndex, nextIndex - lastIndex);
                 parentIndex = GetDirectoryIndex(parentIndex, childDirectory);
                 lastIndex = nextIndex + 1;
                 nextIndex = directory.IndexOf(PathSeparator, lastIndex);

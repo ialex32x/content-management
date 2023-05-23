@@ -58,6 +58,17 @@ namespace Iris.ContentManagement.Internal
                     writer.WriteLine("@end");
                     writer.WriteLine();
                     break;
+                case EPackageType.Zip:
+                    writer.WriteLine("@zip");
+                    writer.WriteLine("{0},{1},{2}", package.digest.size, package.digest.checksum, package.name);writer.WriteLine("@entries");
+                    foreach (var index in entrySet)
+                    {
+                        ref readonly var entry = ref _entries.UnsafeGetValueByRef(index);
+                        writer.WriteLine(entry.entryPath);
+                    }
+                    writer.WriteLine("@end");
+                    writer.WriteLine();
+                    break;
                 default: throw new NotSupportedException();
             }
         }
@@ -74,6 +85,7 @@ namespace Iris.ContentManagement.Internal
                 switch (line)
                 {
                     case "@assetbundle": ImportPackage(reader, EPackageType.AssetBundle); break;
+                    case "@zip": ImportPackage(reader, EPackageType.Zip); break;
                     default: break;
                 }
             }

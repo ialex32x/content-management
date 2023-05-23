@@ -1,7 +1,9 @@
 {
     "name": "Iris.ContentManagement.Editor",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "Iris.ContentManagement"
+    ],
     "includePlatforms": [
         "Editor"
     ],
