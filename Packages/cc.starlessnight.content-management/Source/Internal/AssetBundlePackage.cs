@@ -27,8 +27,6 @@ namespace Iris.ContentManagement.Internal
         private SList<AssetRequest> _assetRequests = new();
         private Dictionary<string, WeakReference<UnityAsset>> _cachedAssets = new();
 
-        public EPackageState state => _state;
-
         public AssetBundlePackage(in AssetBundleManager.AssetBundleHandle assetBundle)
         {
             _assetBundle = assetBundle;

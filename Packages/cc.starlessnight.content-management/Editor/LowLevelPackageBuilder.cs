@@ -61,6 +61,7 @@ namespace Iris.ContentManagement.Editor
             {
                 "Assets/Examples/Files/test1.json",
                 "Assets/Examples/Files/test2.json",
+                "MyTestContent/System.Xml.XmlSerializer.xml",
             });
             BuildAssetBundles();
             BuildZipArchives();

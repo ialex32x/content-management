@@ -50,7 +50,7 @@ namespace Iris.ContentManagement.Internal
         }
 
         [Flags]
-        private enum EAssetBundleState
+        private enum ESlotState
         {
             Created = 1,
             Loading = 2,
@@ -64,24 +64,14 @@ namespace Iris.ContentManagement.Internal
             PendingFlags = Loading | Unloading | WaitForUnload | WaitForLoad,
         }
 
-        private readonly struct SlotInfo
-        {
-            public readonly string name;
-            public readonly ContentDigest digest;
-
-            public SlotInfo(string name, in ContentDigest digest)
-            {
-                this.name = name;
-                this.digest = digest;
-            }
-        }
-
         private class AssetBundleSlot
         {
             private WeakReference<IAssetBundleRequestHandler> _handler = new(null);
 
-            public readonly SlotInfo info;
-            public EAssetBundleState state;
+            public readonly string name;
+            public readonly ContentDigest digest;
+
+            public ESlotState state;
             public AssetBundle assetBundle;
             public Stream stream;
             public WebRequestHandle webRequest;
@@ -89,21 +79,18 @@ namespace Iris.ContentManagement.Internal
             public AsyncOperation unloadingOperation;
             public AssetBundleCreateRequest loadingOperation;
 
-            public string name => info.name;
-
-            public ContentDigest digest => info.digest;
-
-            public AssetBundleSlot(in SlotInfo info)
+            public AssetBundleSlot(string name, in ContentDigest digest)
             {
-                this.info = info;
-                this.state = EAssetBundleState.Created;
+                this.name = name;
+                this.digest = digest;
+                this.state = ESlotState.Created;
             }
 
             public void WaitUntilCompleted()
             {
-                while ((state & EAssetBundleState.PendingFlags) != 0)
+                while ((state & ESlotState.PendingFlags) != 0)
                 {
-                    Utility.Logger.Debug("wait for pending operation {0}: {1}", info.name, state);
+                    Utility.Logger.Debug("wait for pending operation {0}: {1}", name, state);
                     Scheduler.ForceUpdate();
                 }
             }
@@ -152,7 +139,7 @@ namespace Iris.ContentManagement.Internal
 
         public AssetBundleHandle CreateAssetBundle(in ContentLibrary.PackageInfo packageInfo)
         {
-            return new(this, _assetBundles.Add(new AssetBundleSlot(new(packageInfo.name, packageInfo.digest))));
+            return new(this, _assetBundles.Add(new AssetBundleSlot(packageInfo.name, packageInfo.digest)));
         }
 
         public void Shutdown()
@@ -179,7 +166,7 @@ namespace Iris.ContentManagement.Internal
         {
             if (_assetBundles.TryGetValue(referenceIndex, out var assetBundleSlot))
             {
-                Utility.Assert.Debug(assetBundleSlot.state == EAssetBundleState.Loaded || assetBundleSlot.state == EAssetBundleState.Invalid);
+                Utility.Assert.Debug(assetBundleSlot.state == ESlotState.Loaded || assetBundleSlot.state == ESlotState.Invalid);
                 if (assetBundleSlot.assetBundle != null)
                 {
                     return assetBundleSlot.assetBundle.LoadAsset(assetName);
@@ -192,7 +179,7 @@ namespace Iris.ContentManagement.Internal
         {
             if (_assetBundles.TryGetValue(referenceIndex, out var assetBundleSlot))
             {
-                Utility.Assert.Debug(assetBundleSlot.state == EAssetBundleState.Loaded || assetBundleSlot.state == EAssetBundleState.Invalid);
+                Utility.Assert.Debug(assetBundleSlot.state == ESlotState.Loaded || assetBundleSlot.state == ESlotState.Invalid);
                 if (assetBundleSlot.assetBundle != null)
                 {
                     return assetBundleSlot.assetBundle.LoadAssetAsync(assetName);
@@ -221,31 +208,31 @@ namespace Iris.ContentManagement.Internal
             assetBundleSlot.Bind(callback);
             switch (assetBundleSlot.state)
             {
-                case EAssetBundleState.WaitForUnload:
+                case ESlotState.WaitForUnload:
                     // resurrect
                     Utility.Assert.Debug(assetBundleSlot.assetBundle != null);
-                    assetBundleSlot.state = EAssetBundleState.Loaded;
+                    assetBundleSlot.state = ESlotState.Loaded;
                     assetBundleSlot.Notify();
                     break;
-                case EAssetBundleState.WaitForLoad:
-                case EAssetBundleState.Loading:
+                case ESlotState.WaitForLoad:
+                case ESlotState.Loading:
                     {
                         break;
                     }
-                case EAssetBundleState.Created:
+                case ESlotState.Created:
                     {
-                        assetBundleSlot.state = EAssetBundleState.Loading;
+                        assetBundleSlot.state = ESlotState.Loading;
                         LoadAssetBundleImpl(assetBundleSlot, true);
                         break;
                     }
-                case EAssetBundleState.Invalid:
-                case EAssetBundleState.Loaded:
+                case ESlotState.Invalid:
+                case ESlotState.Loaded:
                     {
                         assetBundleSlot.Notify();
                         break;
                     }
-                case EAssetBundleState.Unloading:
-                    assetBundleSlot.state = EAssetBundleState.WaitForLoad;
+                case ESlotState.Unloading:
+                    assetBundleSlot.state = ESlotState.WaitForLoad;
                     break;
                 default:
                     Utility.Assert.Never();
@@ -281,25 +268,25 @@ namespace Iris.ContentManagement.Internal
         {
             switch (assetBundleSlot.state)
             {
-                case EAssetBundleState.Loading:
+                case ESlotState.Loading:
                     // 当前载入中, 标记成待卸载
-                    assetBundleSlot.state = EAssetBundleState.WaitForUnload;
+                    assetBundleSlot.state = ESlotState.WaitForUnload;
                     break;
-                case EAssetBundleState.WaitForLoad:
+                case ESlotState.WaitForLoad:
                     // 当前等待载入 (实际已经在执行卸载)
                     Utility.Assert.Debug(assetBundleSlot.unloadingOperation != null);
-                    assetBundleSlot.state = EAssetBundleState.Unloading;
+                    assetBundleSlot.state = ESlotState.Unloading;
                     break;
-                case EAssetBundleState.Loaded:
+                case ESlotState.Loaded:
                     Utility.Assert.Debug(assetBundleSlot.assetBundle != null);
-                    assetBundleSlot.state = EAssetBundleState.Unloading;
+                    assetBundleSlot.state = ESlotState.Unloading;
                     assetBundleSlot.unloadingOperation = assetBundleSlot.assetBundle.UnloadAsync(true);
                     assetBundleSlot.unloadingOperation.completed += OnAssetBundleUnloaded(assetBundleSlot);
                     break;
-                case EAssetBundleState.Unloading: // 已在执行卸载
-                case EAssetBundleState.WaitForUnload: // 已请求执行卸载
-                case EAssetBundleState.Created: // 已卸载
-                case EAssetBundleState.Invalid: // 无效包, 无需卸载
+                case ESlotState.Unloading: // 已在执行卸载
+                case ESlotState.WaitForUnload: // 已请求执行卸载
+                case ESlotState.Created: // 已卸载
+                case ESlotState.Invalid: // 无效包, 无需卸载
                     break;
                 default:
                     Utility.Assert.Never();
@@ -326,7 +313,7 @@ namespace Iris.ContentManagement.Internal
             }
 
             // 下载完成后仍然无法载入, 视为无效
-            assetBundleSlot.state = EAssetBundleState.Invalid;
+            assetBundleSlot.state = ESlotState.Invalid;
             assetBundleSlot.Notify();
         }
 
@@ -338,13 +325,13 @@ namespace Iris.ContentManagement.Internal
                 assetBundleSlot.webRequest.Unbind();
                 switch (assetBundleSlot.state)
                 {
-                    case EAssetBundleState.Loading:
+                    case ESlotState.Loading:
                         LoadAssetBundleImpl(assetBundleSlot, false);
                         break;
-                    case EAssetBundleState.WaitForUnload:
+                    case ESlotState.WaitForUnload:
                         // 尚未加载 ab, 直接标记为卸载状态即可
                         Utility.Assert.Debug(assetBundleSlot.assetBundle == null);
-                        assetBundleSlot.state = EAssetBundleState.Created;
+                        assetBundleSlot.state = ESlotState.Created;
                         break;
                     default:
                         Utility.Assert.Never();
@@ -367,22 +354,22 @@ namespace Iris.ContentManagement.Internal
                 assetBundleSlot.loadingOperation = null;
                 switch (assetBundleSlot.state)
                 {
-                    case EAssetBundleState.Loading:
+                    case ESlotState.Loading:
                         {
-                            assetBundleSlot.state = EAssetBundleState.Loaded;
+                            assetBundleSlot.state = ESlotState.Loaded;
                             assetBundleSlot.Notify();
                         }
                         break;
-                    case EAssetBundleState.WaitForUnload:
+                    case ESlotState.WaitForUnload:
                         if (assetBundleSlot.assetBundle != null)
                         {
-                            assetBundleSlot.state = EAssetBundleState.Unloading;
+                            assetBundleSlot.state = ESlotState.Unloading;
                             assetBundleSlot.unloadingOperation = assetBundleSlot.assetBundle.UnloadAsync(true);
                             assetBundleSlot.unloadingOperation.completed += OnAssetBundleUnloaded(assetBundleSlot);
                         }
                         else
                         {
-                            assetBundleSlot.state = EAssetBundleState.Created;
+                            assetBundleSlot.state = ESlotState.Created;
                         }
                         break;
                     default:
@@ -403,10 +390,10 @@ namespace Iris.ContentManagement.Internal
                 assetBundleSlot.unloadingOperation = null;
                 switch (assetBundleSlot.state)
                 {
-                    case EAssetBundleState.Unloading:
-                        assetBundleSlot.state = EAssetBundleState.Created;
+                    case ESlotState.Unloading:
+                        assetBundleSlot.state = ESlotState.Created;
                         break;
-                    case EAssetBundleState.WaitForLoad:
+                    case ESlotState.WaitForLoad:
                         LoadAssetBundleImpl(assetBundleSlot, true);
                         break;
                     default:
