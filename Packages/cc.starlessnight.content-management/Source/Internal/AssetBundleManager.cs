@@ -388,6 +388,11 @@ namespace Iris.ContentManagement.Internal
                     return;
                 }
                 assetBundleSlot.unloadingOperation = null;
+                if (assetBundleSlot.stream != null)
+                {
+                    assetBundleSlot.stream.Close();
+                    assetBundleSlot.stream = null;
+                }
                 switch (assetBundleSlot.state)
                 {
                     case ESlotState.Unloading:
