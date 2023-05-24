@@ -26,11 +26,13 @@ namespace Iris.ContentManagement.Internal
             internal UnityEngine.Object LoadAsset(string assetName) => _manager.LoadAsset(_index, assetName);
 
             // only supported by assetbundle package
-            internal AssetBundleRequest LoadAssetAsync(string assetName) => _manager.LoadAssetAsync(_index, assetName);
+            internal void LoadAssetAsync(string assetName, in Utility.SIndex payload) => _manager.LoadAssetAsync(_index, assetName, payload);
 
             internal void LoadSync() => _manager.LoadPackageSync(_index);
 
-            internal void LoadAsync(IPackageRequestHandler callback) => _manager.LoadPackageAsync(_index, callback);
+            internal void Bind(IPackageRequestHandler callback) => _manager.Bind(_index, callback);
+
+            internal void LoadAsync() => _manager.LoadPackageAsync(_index);
 
             public void Unload() => _manager.UnloadAssetBundle(_index);
 

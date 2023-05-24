@@ -87,36 +87,44 @@ namespace Iris.ContentManagement.Internal
             return default;
         }
 
-        private AssetBundleRequest LoadAssetAsync(in SIndex referenceIndex, string assetName)
+        private void LoadAssetAsync(in SIndex referenceIndex, string assetName, in Utility.SIndex payload)
         {
             VerifyState(assetName);
             if (_packages.TryGetValue(referenceIndex, out var slot))
             {
-                return slot.LoadAssetAsync(assetName);
+                slot.RequestAssetAsync(assetName, payload);
             }
-            return default;
         }
 
         //NOTE will remove the last callback
         private void LoadPackageSync(in SIndex referenceIndex)
         {
-            LoadPackageAsync(referenceIndex, null);
+            LoadPackageAsync(referenceIndex);
             if (_packages.TryGetValue(referenceIndex, out var slot))
             {
                 slot.WaitUntilCompleted();
             }
         }
 
-        private void LoadPackageAsync(in SIndex referenceIndex, IPackageRequestHandler callback)
+        private void Bind(in SIndex referenceIndex, IPackageRequestHandler callback)
         {
             if (!_packages.TryGetValue(referenceIndex, out var slot))
             {
                 Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
                 return;
             }
-
             VerifyState(slot.name);
             slot.Bind(callback);
+        }
+
+        private void LoadPackageAsync(in SIndex referenceIndex)
+        {
+            if (!_packages.TryGetValue(referenceIndex, out var slot))
+            {
+                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
+                return;
+            }
+            VerifyState(slot.name);
             slot.Load(true);
         }
 

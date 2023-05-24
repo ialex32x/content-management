@@ -28,6 +28,7 @@ namespace Iris.ContentManagement.Internal
 
         public string[] GetDependencies(string packageName)
         {
+#if IRIS_DIRECT_DEPS_ONLY
             var openSet = new List<string>();
             var closeSet = new HashSet<string>();
 
@@ -57,6 +58,10 @@ namespace Iris.ContentManagement.Internal
             var results = new string[closeSet.Count];
             closeSet.CopyTo(results, 0);
             return results;
+#else
+            var dependencies = _library.GetPackageDependencies(packageName);
+            return dependencies ?? new string[0];
+#endif
         }
 
         public IPackage GetPackage(string packageName)

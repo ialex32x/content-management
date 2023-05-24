@@ -12,6 +12,9 @@ namespace Iris.ContentManagement.Internal
 
     internal interface IPackageRequestHandler
     {
-        void OnRequestCompleted(in PackageManager.PackageHandle handle);
+        void OnPackageLoaded(in PackageManager.PackageHandle handle);
+
+        // unsafe 
+        void OnAssetLoaded(in Utility.SIndex index, UnityEngine.Object target); 
     }
 }

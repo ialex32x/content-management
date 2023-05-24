@@ -35,13 +35,12 @@ namespace Iris.ContentManagement.Internal
             void WaitUntilCompleted();
             void Bind(IPackageRequestHandler handler);
             void Unbind();
-            void Notify();
 
             void Load(bool shouldDownloadMissing);
             void Unload(bool bPreferAsync);
 
             UnityEngine.Object LoadAsset(string assetName);
-            AssetBundleRequest LoadAssetAsync(string assetName);
+            void RequestAssetAsync(string assetName, Utility.SIndex payload);
         }
 
         private class PackageSlotBase
@@ -87,14 +86,13 @@ namespace Iris.ContentManagement.Internal
                 _handler.SetTarget(null);
             }
 
-            public void Notify()
+            protected void OnPackageLoaded()
             {
                 if (_handler.TryGetTarget(out var target))
                 {
                     try
                     {
-                        _handler.SetTarget(null);
-                        target.OnRequestCompleted(new(_manager, _index));
+                        target.OnPackageLoaded(new(_manager, _index));
                     }
                     catch (Exception exception)
                     {
@@ -126,7 +124,7 @@ namespace Iris.ContentManagement.Internal
             }
 
             public UnityEngine.Object LoadAsset(string assetName) => throw new NotSupportedException();
-            public AssetBundleRequest LoadAssetAsync(string assetName) => throw new NotSupportedException();
+            public void RequestAssetAsync(string assetName, SIndex payload) => throw new NotSupportedException();
         }
 
         private class AssetBundleSlot : PackageSlotBase, IPackageSlot
@@ -149,10 +147,24 @@ namespace Iris.ContentManagement.Internal
                 return this._assetBundle != null ? this._assetBundle.LoadAsset(assetName) : default;
             }
 
-            public AssetBundleRequest LoadAssetAsync(string assetName)
+            public void RequestAssetAsync(string assetName, SIndex payload)
             {
                 Utility.Assert.Debug(this._state == ESlotState.Loaded || this._state == ESlotState.Invalid);
-                return this._assetBundle != null ? this._assetBundle.LoadAssetAsync(assetName) : default;
+                var request = this._assetBundle != null ? this._assetBundle.LoadAssetAsync(assetName) : default;
+                if (request == null)
+                {
+                    OnAssetLoaded(payload, null);
+                    return;
+                }
+                request.completed += op => OnAssetLoaded(payload, ((AssetBundleRequest)op).asset);
+            }
+
+            private void OnAssetLoaded(in SIndex payload, UnityEngine.Object asset)
+            {
+                if (_handler.TryGetTarget(out var target))
+                {
+                    target.OnAssetLoaded(payload, asset);
+                }
             }
 
             public void Load(bool shouldDownloadMissing)
@@ -163,7 +175,7 @@ namespace Iris.ContentManagement.Internal
                         // resurrect
                         Utility.Assert.Debug(this._assetBundle != null);
                         this._state = ESlotState.Loaded;
-                        this.Notify();
+                        this.OnPackageLoaded();
                         break;
                     case ESlotState.WaitForLoad:
                     case ESlotState.Loading:
@@ -191,13 +203,13 @@ namespace Iris.ContentManagement.Internal
 
                             // 下载完成后仍然无法载入, 视为无效
                             this._state = ESlotState.Invalid;
-                            this.Notify();
+                            this.OnPackageLoaded();
                             break;
                         }
                     case ESlotState.Invalid:
                     case ESlotState.Loaded:
                         {
-                            this.Notify();
+                            this.OnPackageLoaded();
                             break;
                         }
                     case ESlotState.Unloading:
@@ -228,7 +240,7 @@ namespace Iris.ContentManagement.Internal
                         if (bPreferAsync)
                         {
                             this._unloadingOperation = this._assetBundle.UnloadAsync(true);
-                            this._unloadingOperation.completed += OnAssetBundleUnloaded();
+                            this._unloadingOperation.completed += _ => OnAssetBundleUnloaded();
                         }
                         else
                         {
@@ -264,7 +276,7 @@ namespace Iris.ContentManagement.Internal
                         case ESlotState.Loading:
                             {
                                 this._state = ESlotState.Loaded;
-                                this.Notify();
+                                this.OnPackageLoaded();
                             }
                             break;
                         case ESlotState.WaitForUnload:
@@ -272,7 +284,7 @@ namespace Iris.ContentManagement.Internal
                             {
                                 this._state = ESlotState.Unloading;
                                 this._unloadingOperation = this._assetBundle.UnloadAsync(true);
-                                this._unloadingOperation.completed += OnAssetBundleUnloaded();
+                                this._unloadingOperation.completed += _ => OnAssetBundleUnloaded();
                             }
                             else
                             {
@@ -286,35 +298,28 @@ namespace Iris.ContentManagement.Internal
                 };
             }
 
-            private Action<AsyncOperation> OnAssetBundleUnloaded()
+            private void OnAssetBundleUnloaded()
             {
-                return op =>
+                this._unloadingOperation = null;
+                this._assetBundle = null;
+                if (this._stream != null)
                 {
-                    if (this._unloadingOperation != op)
-                    {
-                        return;
-                    }
-                    this._unloadingOperation = null;
-                    this._assetBundle = null;
-                    if (this._stream != null)
-                    {
-                        this._stream.Close();
-                        this._stream = null;
-                    }
-                    switch (this._state)
-                    {
-                        case ESlotState.Unloading:
-                            OnReleased();
-                            break;
-                        case ESlotState.WaitForLoad:
-                            this._state = ESlotState.Created;
-                            Load(true);
-                            break;
-                        default:
-                            Utility.Assert.Never();
-                            break;
-                    }
-                };
+                    this._stream.Close();
+                    this._stream = null;
+                }
+                switch (this._state)
+                {
+                    case ESlotState.Unloading:
+                        OnReleased();
+                        break;
+                    case ESlotState.WaitForLoad:
+                        this._state = ESlotState.Created;
+                        Load(true);
+                        break;
+                    default:
+                        Utility.Assert.Never();
+                        break;
+                }
             }
 
             private WebRequestAction OnWebRequestCompleted()
@@ -342,6 +347,7 @@ namespace Iris.ContentManagement.Internal
             private void OnReleased()
             {
                 Utility.Assert.Debug(this._assetBundle == null);
+                this._handler.SetTarget(null);
                 this._state = ESlotState.Created;
                 this._manager.ReleaseSlot(this._index);
                 this._stream?.Close();
