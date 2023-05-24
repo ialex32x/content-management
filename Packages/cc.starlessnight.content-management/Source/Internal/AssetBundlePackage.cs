@@ -5,7 +5,8 @@ namespace Iris.ContentManagement.Internal
 {
     using Iris.ContentManagement.Utility;
 
-    public sealed class AssetBundlePackage : IPackage, IAssetBundleRequestHandler, IPackageRequestHandler
+    //TODO ?? 改为通用 Package 包装, assetbundle/zip 的区分已由底层 PackageManager 处理
+    public sealed class AssetBundlePackage : IPackage, IPackageRequestHandler
     {
         private readonly struct AssetRequest
         {
@@ -19,24 +20,22 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        private AssetBundleManager.AssetBundleHandle _assetBundle;
-        private bool _isSelfLoaded;
+        private PackageManager.PackageHandle _packageHandle;
         private EPackageState _state;
         private List<AssetBundlePackage> _dependencies = new();
         private SList<IPackageRequestHandler> _packageRequestHandlers = new();
         private SList<AssetRequest> _assetRequests = new();
         private Dictionary<string, WeakReference<UnityAsset>> _cachedAssets = new();
 
-        public AssetBundlePackage(in AssetBundleManager.AssetBundleHandle assetBundle)
+        public AssetBundlePackage(in PackageManager.PackageHandle handle)
         {
-            _assetBundle = assetBundle;
+            _packageHandle = handle;
             _state = EPackageState.Created;
-            _isSelfLoaded = false;
         }
 
         ~AssetBundlePackage()
         {
-            _assetBundle.Unload();
+            _packageHandle.Unload();
         }
 
         IAsset IPackage.GetAsset(string assetPath)
@@ -51,19 +50,19 @@ namespace Iris.ContentManagement.Internal
             return asset;
         }
 
-        public UnityEngine.Object LoadAssetSync(string assetName)
+        internal UnityEngine.Object LoadAssetSync(string assetName)
         {
             LoadSync();
             Utility.Assert.Debug(_state == EPackageState.Loaded);
-            return _assetBundle.LoadAsset(assetName);
+            return _packageHandle.LoadAsset(assetName);
         }
 
-        public void CancelAssetRequest(in SIndex index)
+        internal void CancelAssetRequest(in SIndex index)
         {
             _assetRequests.RemoveAt(index);
         }
 
-        public void RequestAssetAsync(ref SIndex index, string assetName, IUnityAssetRequestHandler handler)
+        internal void RequestAssetAsync(ref SIndex index, string assetName, IUnityAssetRequestHandler handler)
         {
             _assetRequests.RemoveAt(index);
             if (_state == EPackageState.Loaded)
@@ -78,7 +77,7 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        public void LoadSync()
+        internal void LoadSync()
         {
             if (_state == EPackageState.Loaded)
             {
@@ -90,13 +89,12 @@ namespace Iris.ContentManagement.Internal
                 dependency.LoadSync();
             }
 
+            _packageHandle.LoadSync();
             _state = EPackageState.Loaded;
-            _isSelfLoaded = true;
-            _assetBundle.LoadSync();
-            CheckDependenciesState();
+            OnLoaded();
         }
 
-        public void LoadAsync(out SIndex index, IPackageRequestHandler handler)
+        internal void LoadAsync(out SIndex index, IPackageRequestHandler handler)
         {
             switch (_state)
             {
@@ -108,7 +106,7 @@ namespace Iris.ContentManagement.Internal
                 case EPackageState.Loaded:
                     {
                         index = SIndex.None;
-                        handler?.OnRequestCompleted();
+                        handler?.OnRequestCompleted(_packageHandle);
                         return;
                     }
                 case EPackageState.Created:
@@ -120,7 +118,7 @@ namespace Iris.ContentManagement.Internal
 
                         index = handler != null ? _packageRequestHandlers.Add(handler) : SIndex.None;
                         _state = EPackageState.Loading;
-                        _assetBundle.LoadAsync(this);
+                        _packageHandle.LoadAsync(this);
                         CheckDependenciesState();
                         return;
                     }
@@ -134,28 +132,25 @@ namespace Iris.ContentManagement.Internal
 
         }
 
-        public void AddDependency(AssetBundlePackage package)
+        internal void AddDependency(AssetBundlePackage package)
         {
             Utility.Assert.Debug(_state == EPackageState.Created, "call AddDependency only on init");
             Utility.Assert.Debug(!_dependencies.Contains(package) && package != this);
             _dependencies.Add(package);
         }
 
-        void IPackageRequestHandler.OnRequestCompleted()
+        void IPackageRequestHandler.OnRequestCompleted(in PackageManager.PackageHandle handle)
         {
-            CheckDependenciesState();
-        }
-
-        void IAssetBundleRequestHandler.OnAssetBundleLoaded()
-        {
-            _isSelfLoaded = true;
-            Utility.Logger.Debug("{0} loaded {1}", nameof(AssetBundlePackage), _assetBundle.name);
+            if (handle == _packageHandle)
+            {
+                Utility.Logger.Debug("{0} loaded {1}", nameof(AssetBundlePackage), _packageHandle.name);
+            }
             CheckDependenciesState();
         }
 
         private void InvokeLoadAssetAsync(string assetName, IUnityAssetRequestHandler handler)
         {
-            var request = _assetBundle.LoadAssetAsync(assetName);
+            var request = _packageHandle.LoadAssetAsync(assetName);
             if (request == null)
             {
                 handler.OnRequestCompleted(null);
@@ -167,14 +162,14 @@ namespace Iris.ContentManagement.Internal
 
         private void CheckDependenciesState()
         {
-            if (!_isSelfLoaded)
+            if (!_packageHandle.isCompleted)
             {
                 return;
             }
 
             foreach (var dependency in _dependencies)
             {
-                if (!dependency._isSelfLoaded)
+                if (!dependency._packageHandle.isCompleted)
                 {
                     return;
                 }
@@ -183,17 +178,20 @@ namespace Iris.ContentManagement.Internal
             if (_state == EPackageState.Loading)
             {
                 _state = EPackageState.Loaded;
-                Utility.Logger.Debug("{0} fully loaded {1}", nameof(AssetBundlePackage), _assetBundle.name);
+                OnLoaded();
+            }
+        }
 
-                while (_packageRequestHandlers.TryRemoveAt(0, out var handler))
-                {
-                    handler.OnRequestCompleted();
-                }
-
-                while (_assetRequests.TryRemoveAt(0, out var handler))
-                {
-                    InvokeLoadAssetAsync(handler.assetName, handler.handler);
-                }
+        private void OnLoaded()
+        {
+            Utility.Logger.Debug("{0} fully loaded {1}", nameof(AssetBundlePackage), _packageHandle.name);
+            while (_packageRequestHandlers.TryRemoveAt(0, out var handler))
+            {
+                handler.OnRequestCompleted(_packageHandle);
+            }
+            while (_assetRequests.TryRemoveAt(0, out var handler))
+            {
+                InvokeLoadAssetAsync(handler.assetName, handler.handler);
             }
         }
     }

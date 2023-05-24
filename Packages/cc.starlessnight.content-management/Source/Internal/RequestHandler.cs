@@ -1,11 +1,6 @@
 namespace Iris.ContentManagement.Internal
 {
-    public interface IAssetBundleRequestHandler
-    {
-        void OnAssetBundleLoaded();
-    }
-    
-    public interface IUnityAssetRequestHandler
+    internal interface IUnityAssetRequestHandler
     {
         void OnRequestCompleted(UnityEngine.Object asset);
     }
@@ -15,8 +10,8 @@ namespace Iris.ContentManagement.Internal
         void OnRequestCompleted();
     }
 
-    public interface IPackageRequestHandler
+    internal interface IPackageRequestHandler
     {
-        void OnRequestCompleted();
+        void OnRequestCompleted(in PackageManager.PackageHandle handle);
     }
 }

@@ -31,7 +31,7 @@ namespace Iris.ContentManagement.Internal
                 case EAssetState.Loading:
                     {
                         _package.CancelAssetRequest(_assetRequestHandlerIndex);
-                        OnRequestCompleted(_package.LoadAssetSync(_assetPath));
+                        ((IUnityAssetRequestHandler)this).OnRequestCompleted(_package.LoadAssetSync(_assetPath));
                         return;
                     }
                 default: Utility.Assert.Never(); return;
@@ -71,7 +71,7 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        public void OnRequestCompleted(UnityEngine.Object asset)
+        void IUnityAssetRequestHandler.OnRequestCompleted(UnityEngine.Object asset)
         {
             if (_state != EAssetState.Loaded)
             {

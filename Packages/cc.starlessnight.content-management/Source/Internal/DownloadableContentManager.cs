@@ -10,15 +10,15 @@ namespace Iris.ContentManagement.Internal
         private ContentLibrary _library;
         private IWebRequestQueue _downloader;
         private LocalStorage _storage;
-        private AssetBundleManager _assetBundleManager;
+        private PackageManager _assetBundleManager;
 
         private Dictionary<string, WeakReference<IPackage>> _cachedPackages = new();
 
-        public DownloadableContentManager(ContentLibrary library, IFileCache fileCache, IWebRequestQueue downloader, LocalStorage storage)
+        public DownloadableContentManager(ContentLibrary library, IFileCache fileCache, LocalStorage storage, IWebRequestQueue downloader)
         {
             _library = library;
             _storage = storage;
-            _assetBundleManager = new AssetBundleManager(fileCache, downloader, _storage);
+            _assetBundleManager = new PackageManager(fileCache, _storage, downloader);
         }
 
         public void Shutdown()
