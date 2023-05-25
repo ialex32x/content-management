@@ -91,6 +91,7 @@ namespace Iris.ContentManagement.Utility
             catch (System.Exception) { }
         }
 
+        [Conditional("CONTENTMANAGEMENT_DEBUG")]
         [Conditional("CONTENTMANAGEMENT_RELEASE")]
         public static void Error(object obj)
         {
@@ -114,6 +115,7 @@ namespace Iris.ContentManagement.Utility
             catch (System.Exception) { }
         }
 
+        [Conditional("CONTENTMANAGEMENT_DEBUG")]
         [Conditional("CONTENTMANAGEMENT_RELEASE")]
         public static void Fatal(object obj)
         {

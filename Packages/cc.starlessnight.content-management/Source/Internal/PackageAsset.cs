@@ -39,11 +39,9 @@ namespace Iris.ContentManagement.Internal
                     return;
                 case EAssetState.Loading:
                     {
-                        while (!isCompleted)
-                        {
-                            Utility.Logger.Debug("wait for pending request {0}", _assetPath);
-                            Scheduler.ForceUpdate();
-                        }
+                        Utility.Logger.Debug("wait for pending request {0}", _assetPath);
+                        ContentSystem.Scheduler.ForceUpdate(() => !isCompleted);
+                        Utility.Logger.Debug("finish pending request {0}", _assetPath);
                         return;
                     }
                 default: Utility.Assert.Never(); return;

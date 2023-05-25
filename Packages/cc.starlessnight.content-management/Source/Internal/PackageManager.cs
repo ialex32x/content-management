@@ -31,7 +31,7 @@ namespace Iris.ContentManagement.Internal
         {
             Utility.Assert.Debug(packageInfo.type == EPackageType.Zip);
             var index = _packages.Add(default);
-            IPackageSlot slot = packageInfo.type == EPackageType.AssetBundle 
+            IPackageSlot slot = packageInfo.type == EPackageType.AssetBundle
                 ? new AssetBundleSlot(this, index, packageInfo.name, packageInfo.digest)
                 : new ZipArchiveSlot(this, index, packageInfo.name, packageInfo.digest);
             _packages.UnsafeSetValue(index, slot);
@@ -72,11 +72,9 @@ namespace Iris.ContentManagement.Internal
 
         private void WaitUntilCompleted(IPackageSlot slot)
         {
-            while (!slot.isCompleted)
-            {
-                Utility.Logger.Debug("wait for pending operation {0}", slot.name);
-                Scheduler.ForceUpdate();
-            }
+            Utility.Logger.Debug("wait for pending package {0}", slot.name);
+            ContentSystem.Scheduler.ForceUpdate(() => !slot.isCompleted);
+            Utility.Logger.Debug("finish pending package {0}", slot.name);
         }
 
         private void Bind(in SIndex referenceIndex, IPackageRequestHandler callback)
@@ -118,7 +116,7 @@ namespace Iris.ContentManagement.Internal
         {
             if (_mainThreadId != Thread.CurrentThread.ManagedThreadId)
             {
-                Scheduler.Get().Post(() =>
+                ContentSystem.Scheduler.Post(() =>
                 {
                     if (_packages.TryGetValue(referenceIndex, out var slot))
                     {

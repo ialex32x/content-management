@@ -70,10 +70,7 @@ namespace Iris.ContentManagement.Internal
         {
             CheckMainThreadAccess();
             Utility.Logger.Warning("wait all requests begin");
-            while (_activeRequests.Count != 0 || _waitingRequests.Count != 0)
-            {
-                Scheduler.ForceUpdate();
-            }
+            ContentSystem.Scheduler.ForceUpdate(() => _activeRequests.Count != 0 || _waitingRequests.Count != 0);
             Utility.Logger.Warning("wait all requests end");
         }
 
@@ -89,10 +86,7 @@ namespace Iris.ContentManagement.Internal
             if (request != null)
             {
                 Utility.Logger.Warning("wait request begin {0}", entryName);
-                while (!request.isCompleted)
-                {
-                    Scheduler.ForceUpdate();
-                }
+                ContentSystem.Scheduler.ForceUpdate(() => !request.isCompleted);
                 Utility.Logger.Warning("wait request end {0}", entryName);
             }
             else
@@ -187,7 +181,7 @@ namespace Iris.ContentManagement.Internal
             }
             else
             {
-                Scheduler.Get().Post(() => OnRequestCompleted(request));
+                ContentSystem.Scheduler.Post(() => OnRequestCompleted(request));
             }
         }
 

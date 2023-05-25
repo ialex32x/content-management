@@ -30,6 +30,11 @@ namespace Iris.ContentManagement.Internal
             if (!this.IsCompleted)
             {
                 var index = Utility.SIndex.None;
+                //TODO 使用不同的接口处理 stream/asset, 在哪一层区分 Zip File Stream 和 Unity Asset ?
+                if (typeof(T).IsSubclassOf(typeof(System.IO.Stream)))
+                {
+                    
+                }
                 _request.asset.RequestAsyncLoad(ref index, _request);
             }
         }

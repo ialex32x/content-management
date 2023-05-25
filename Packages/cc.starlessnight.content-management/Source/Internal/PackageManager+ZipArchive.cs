@@ -40,6 +40,7 @@ namespace Iris.ContentManagement.Internal
                     return default;
                 }
                 var entry = _file.GetEntry(assetName);
+                //TODO add a stream wrapper to make the stream under the hood reusable after dispose
                 return _file?.GetInputStream(entry);
             }
 

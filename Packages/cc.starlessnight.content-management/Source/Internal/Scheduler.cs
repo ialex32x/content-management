@@ -9,63 +9,47 @@ namespace Iris.ContentManagement.Internal
 
     public class Scheduler
     {
-        private static Scheduler _instance;
         private int _mainThreadId;
         private ReaderWriterLockSlim _threadedActionsLock = new();
         private Queue<Action> _threadedActions = new();
         private Queue<Action> _actions = new();
 
-        public static void Initialize()
+        internal Scheduler()
         {
-            _instance = new Scheduler();
-            _instance._mainThreadId = Thread.CurrentThread.ManagedThreadId;
-
-
+            _mainThreadId = Thread.CurrentThread.ManagedThreadId;
 #if UNITY_EDITOR
             if (!UnityEditor.EditorApplication.isPlaying)
             {
-                UnityEditor.EditorApplication.update += Update;
+                UnityEditor.EditorApplication.update += OnUpdate;
+                return;
             }
-            else
-            {
-                new GameObject(nameof(Scheduler)).AddComponent<SchedulerHost>();
-            }
-#else
-                new GameObject(nameof(Scheduler)).AddComponent<SchedulerHost>();
 #endif
+            new GameObject(nameof(Scheduler)).AddComponent<SchedulerHost>().Bind(this);
         }
 
-        public static Scheduler Get() => _instance;
-
-        public static void Shutdown()
+        public void Shutdown()
         {
-            if (_instance != null)
-            {
 #if UNITY_EDITOR
-                if (!UnityEditor.EditorApplication.isPlaying)
-                {
-                    UnityEditor.EditorApplication.update -= Update;
-                }
+            if (!UnityEditor.EditorApplication.isPlaying)
+            {
+                UnityEditor.EditorApplication.update -= OnUpdate;
+            }
 #endif
-                _instance = null;
-            }
         }
 
-        public static void Update()
+        public void ForceUpdate()
         {
-            if (_instance != null)
-            {
-                _instance.OnUpdate();
-            }
-        }
-
-        public static void ForceUpdate()
-        {
-            if (_instance != null)
-            {
-                _instance.OnUpdate();
-            }
+            OnUpdate();
             Thread.Sleep(50);
+        }
+
+        public void ForceUpdate(Func<bool> isContinueFunc)
+        {
+            while (isContinueFunc())
+            {
+                OnUpdate();
+                Thread.Sleep(50);
+            }
         }
 
         public void Post(Action action)
@@ -82,7 +66,7 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        private void OnUpdate()
+        internal void OnUpdate()
         {
             var count = _actions.Count;
             while (count-- > 0)

@@ -8,14 +8,10 @@ namespace Iris.ContentManagement.Internal
 
     public class SchedulerHost : MonoBehaviour
     {
-        void Update()
-        {
-            Scheduler.Update();
-        }
+        private Scheduler _scheduler;
 
-        void OnDestroy()
-        {
-            Scheduler.Shutdown();
-        }
+        internal void Bind(Scheduler scheduler) => _scheduler = scheduler;
+
+        void Update() => _scheduler.OnUpdate();
     }
 }

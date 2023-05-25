@@ -115,11 +115,12 @@ public class ContentManagement_Test
     [UnityTest]
     public IEnumerator Test_Download()
     {
+        ContentSystem.Startup();
+        
         var storage = new LocalStorage(new OSFileSystem("LocalStorage"));
         var digest = new ContentDigest(33270, 13661);
         var downloader = new Downloader(new TestUriResolver());
 
-        Scheduler.Initialize();
         // storage.DeleteFile("test1");
         if (!storage.VerifyFile("test1", digest)) downloader.Enqueue(storage, "test1", digest.size);
         if (!storage.VerifyFile("test2", digest)) downloader.Enqueue(storage, "test2", digest.size);
@@ -155,8 +156,8 @@ public class ContentManagement_Test
         }
         finally
         {
-            Scheduler.Shutdown();
             storage.Shutdown();
+            ContentSystem.Shutdown();
         }
         yield return null;
     }
