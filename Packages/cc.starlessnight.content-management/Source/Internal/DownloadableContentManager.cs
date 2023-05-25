@@ -10,15 +10,16 @@ namespace Iris.ContentManagement.Internal
         private ContentLibrary _library;
         private IWebRequestQueue _downloader;
         private LocalStorage _storage;
-        private PackageManager _assetBundleManager;
+        private PackageManager _packageManager;
 
-        private Dictionary<string, WeakReference<IPackage>> _cachedPackages = new();
+        private Dictionary<string, WeakReference<UPackage>> _cachedPackages = new();
+        private Dictionary<string, WeakReference<IAsset>> _cachedAssets = new();
 
         public DownloadableContentManager(ContentLibrary library, IFileCache fileCache, LocalStorage storage, IWebRequestQueue downloader)
         {
             _library = library;
             _storage = storage;
-            _assetBundleManager = new PackageManager(fileCache, _storage, downloader);
+            _packageManager = new PackageManager(fileCache, _storage, downloader);
         }
 
         public void Shutdown()
@@ -64,58 +65,41 @@ namespace Iris.ContentManagement.Internal
 #endif
         }
 
-        public IPackage GetPackage(string packageName)
+        private UPackage GetPackage(in ContentLibrary.PackageInfo packageInfo)
         {
-            if (string.IsNullOrEmpty(packageName))
+            if (!packageInfo.isValid)
             {
-                return default;
+                return UPackage.Null;
             }
-
-            if (_cachedPackages.TryGetValue(packageName, out var weakReference) && weakReference.TryGetTarget(out var package))
+            if (_cachedPackages.TryGetValue(packageInfo.name, out var weakReference) && weakReference.TryGetTarget(out var package))
             {
                 return package;
             }
-
-            var packageInfo = _library.GetPackage(packageName);
-            if (packageInfo.isValid)
+            package = new UPackage(_packageManager.CreatePackage(packageInfo));
+            _cachedPackages.Add(packageInfo.name, new(package));
+            foreach (var dependency in GetDependencies(packageInfo.name))
             {
-                switch (packageInfo.type)
-                {
-                    case EPackageType.AssetBundle:
-                        {
-                            var assetBundlePackage = new AssetBundlePackage(_assetBundleManager.CreateAssetBundle(packageInfo));
-
-                            package = assetBundlePackage;
-                            _cachedPackages.Add(packageInfo.name, new(package));
-                            foreach (var dependency in GetDependencies(packageInfo.name))
-                            {
-                                if (GetPackage(dependency) is AssetBundlePackage other)
-                                {
-                                    assetBundlePackage.AddDependency(other);
-                                }
-                                else
-                                {
-                                    Utility.Assert.Never("unsupported");
-                                }
-                            }
-                            return package;
-                        }
-                    case EPackageType.Zip:
-                        {
-                            //TODO Zip 包访问
-                            throw new NotImplementedException();
-                        }
-                    default: throw new ArgumentException();
-                }
+                var dependencyPackage = GetPackage(_library.GetPackage(dependency));
+                package.AddDependency(dependencyPackage);
             }
-
-            return default;
+            return package;
         }
 
         public IAsset GetAsset(string assetPath)
         {
-            var package = GetPackage(_library.GetEntryPackage(assetPath).name);
-            return package != null ? package.GetAsset(assetPath) : NullAsset.Default;
+            if (_cachedAssets.TryGetValue(assetPath, out var weakReference) && weakReference.TryGetTarget(out var asset))
+            {
+                return asset;
+            }
+            var entryInfo = _library.GetEntry(assetPath);
+            if (!entryInfo.isValid)
+            {
+                return EdSimulatedAsset.Null;
+            }
+            var package = GetPackage(entryInfo.package);
+            asset = new PackageAsset(package, assetPath);
+            _cachedAssets[assetPath] = new(asset);
+            return asset;
         }
     }
 }

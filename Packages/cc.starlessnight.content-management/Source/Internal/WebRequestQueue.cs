@@ -13,6 +13,8 @@ namespace Iris.ContentManagement.Internal
         void RegisterCallback(in WebRequestInfo info, ref SIndex callback, WebRequestAction action);
         void UnregisterCallback(in WebRequestInfo info, in SIndex callback);
 
+        bool IsValidRequest(in WebRequestInfo info, in SIndex callback);
+
         void Shutdown();
     }
 }

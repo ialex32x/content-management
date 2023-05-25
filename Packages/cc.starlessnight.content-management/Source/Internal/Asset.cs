@@ -1,20 +1,15 @@
+
+using Iris.ContentManagement.Utility;
+
 namespace Iris.ContentManagement.Internal
 {
-    using Iris.ContentManagement.Utility;
-    
     public interface IAsset
     {
-        EAssetState state { get; }
+        bool isCompleted { get; }
 
-        UnityEngine.Object Get();
-
-        //TODO 是否在 Asset 上提供文件读接口 (混合资源和文件)
-        // Stream OpenRead();
-
+        object Get();
         void RequestSyncLoad();
-
-        void RequestAsyncLoad(ref SIndex index, IAssetRequestHandler handler);
-
-        void CancelRequest(ref SIndex index);
+        void RequestAsyncLoad(ref Utility.SIndex index, IAssetRequestHandler handler);
+        void CancelRequest(ref Utility.SIndex index);
     }
 }

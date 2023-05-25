@@ -6,12 +6,12 @@ namespace Iris.ContentManagement.Internal
 {
     //TODO 编辑器模式下也使用 ContentBuilder 产生 ContentDB 提供与最终运行时相同的流程
     // 编辑器模式下的资源管理器 (没有 ContentDB 查询支持)
-    public sealed class EdContentManager : IContentManager
+    public sealed class EdSimulatedContentManager : IContentManager
     {
         private IFileSystem _rawFileSystem;
         private Dictionary<string, WeakReference<IAsset>> _cachedAssets = new();
 
-        public EdContentManager()
+        public EdSimulatedContentManager()
         {
             _rawFileSystem = new OSFileSystem();
             _rawFileSystem.Load();
@@ -31,12 +31,12 @@ namespace Iris.ContentManagement.Internal
 
             if (_rawFileSystem.Exists(assetPath))
             {
-                asset = new Internal.EdUnityAsset(assetPath);
+                asset = new Internal.EdSimulatedAsset(assetPath);
                 _cachedAssets[assetPath] = new(asset);
                 return asset;
             }
 
-            return NullAsset.Default;
+            return EdSimulatedAsset.Null;
         }
     }
 }

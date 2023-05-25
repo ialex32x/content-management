@@ -1,8 +1,8 @@
 namespace Iris.ContentManagement.Internal
 {
-    internal interface IUnityAssetRequestHandler
+    internal interface IPackageAssetRequestHandler
     {
-        void OnRequestCompleted(UnityEngine.Object asset);
+        void OnRequestCompleted(object target);
     }
 
     public interface IAssetRequestHandler
@@ -15,6 +15,6 @@ namespace Iris.ContentManagement.Internal
         void OnPackageLoaded(in PackageManager.PackageHandle handle);
 
         // unsafe 
-        void OnAssetLoaded(in Utility.SIndex index, UnityEngine.Object target); 
+        void OnAssetLoaded(in Utility.SIndex index, object target); 
     }
 }

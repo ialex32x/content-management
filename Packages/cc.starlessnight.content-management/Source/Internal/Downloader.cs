@@ -139,6 +139,12 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
+        public bool IsValidRequest(in WebRequestInfo info, in SIndex callback)
+        {
+            var impl = Find(info.name);
+            return impl != null ? impl.IsValidCallback(callback) : false;
+        }
+
         private WebRequestImpl Find(string entryName)
         {
             var node = _waitingRequests.First;
@@ -255,6 +261,8 @@ namespace Iris.ContentManagement.Internal
             public SIndex RegisterCallback(WebRequestAction action) => _callbacks.Add(action);
 
             public void UnregisterCallback(in SIndex index) => _callbacks.RemoveAt(index);
+
+            public bool IsValidCallback(in SIndex index) => _callbacks.IsValidIndex(index);
 
             public void SendEvents()
             {

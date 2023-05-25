@@ -9,7 +9,7 @@ namespace Iris.ContentManagement.Internal
 
     public sealed partial class PackageManager
     {
-        public readonly struct PackageHandle : IEquatable<PackageHandle>
+        internal readonly struct PackageHandle : IEquatable<PackageHandle>
         {
             private readonly PackageManager _manager;
             private readonly Utility.SIndex _index;
@@ -22,19 +22,19 @@ namespace Iris.ContentManagement.Internal
 
             public PackageHandle(PackageManager manager, Utility.SIndex index) => (this._manager, this._index) = (manager, index);
 
-            // only supported by assetbundle package
-            internal UnityEngine.Object LoadAsset(string assetName) => _manager.LoadAsset(_index, assetName);
-
-            // only supported by assetbundle package
-            internal void LoadAssetAsync(string assetName, in Utility.SIndex payload) => _manager.LoadAssetAsync(_index, assetName, payload);
+            internal void Bind(IPackageRequestHandler callback) => _manager.Bind(_index, callback);
 
             internal void LoadSync() => _manager.LoadPackageSync(_index);
 
-            internal void Bind(IPackageRequestHandler callback) => _manager.Bind(_index, callback);
-
             internal void LoadAsync() => _manager.LoadPackageAsync(_index);
 
-            public void Unload() => _manager.UnloadAssetBundle(_index);
+            public void Unload() => _manager.UnloadPackage(_index);
+
+            // internal Stream OpenRead(string assetName) => _manager.OpenRead(_index, assetName);
+
+            internal object LoadAsset(string assetName) => _manager.LoadAsset(_index, assetName);
+
+            internal void LoadAssetAsync(string assetName, in Utility.SIndex payload) => _manager.LoadAssetAsync(_index, assetName, payload);
 
             public bool Equals(in PackageHandle other) => this == other;
 

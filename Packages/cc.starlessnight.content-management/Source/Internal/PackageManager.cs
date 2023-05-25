@@ -27,20 +27,13 @@ namespace Iris.ContentManagement.Internal
             _downloader = downloader;
         }
 
-        public PackageHandle CreateAssetBundle(in ContentLibrary.PackageInfo packageInfo)
-        {
-            Utility.Assert.Debug(packageInfo.type == EPackageType.AssetBundle);
-            var index = _packages.Add(default);
-            var slot = new AssetBundleSlot(this, index, packageInfo.name, packageInfo.digest);
-            _packages.UnsafeSetValue(index, slot);
-            return new(this, index);
-        }
-
-        public PackageHandle CreateZipArchive(in ContentLibrary.PackageInfo packageInfo)
+        internal PackageHandle CreatePackage(in ContentLibrary.PackageInfo packageInfo)
         {
             Utility.Assert.Debug(packageInfo.type == EPackageType.Zip);
             var index = _packages.Add(default);
-            var slot = new ZipArchiveSlot(this, index, packageInfo.name, packageInfo.digest);
+            IPackageSlot slot = packageInfo.type == EPackageType.AssetBundle 
+                ? new AssetBundleSlot(this, index, packageInfo.name, packageInfo.digest)
+                : new ZipArchiveSlot(this, index, packageInfo.name, packageInfo.digest);
             _packages.UnsafeSetValue(index, slot);
             return new(this, index);
         }
@@ -55,8 +48,8 @@ namespace Iris.ContentManagement.Internal
             while (_packages.TryRemoveAt(0, out var slot))
             {
                 slot.Unbind();
-                slot.Unload(false);
-                slot.WaitUntilCompleted();
+                slot.Unload();
+                WaitUntilCompleted(slot);
             }
         }
 
@@ -77,7 +70,82 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        private UnityEngine.Object LoadAsset(in SIndex referenceIndex, string assetName)
+        private void WaitUntilCompleted(IPackageSlot slot)
+        {
+            while (!slot.isCompleted)
+            {
+                Utility.Logger.Debug("wait for pending operation {0}", slot.name);
+                Scheduler.ForceUpdate();
+            }
+        }
+
+        private void Bind(in SIndex referenceIndex, IPackageRequestHandler callback)
+        {
+            if (!_packages.TryGetValue(referenceIndex, out var slot))
+            {
+                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
+                return;
+            }
+            VerifyState(slot.name);
+            slot.Bind(callback);
+        }
+
+        //NOTE will remove the last callback
+        private void LoadPackageSync(in SIndex referenceIndex)
+        {
+            LoadPackageAsync(referenceIndex);
+            if (_packages.TryGetValue(referenceIndex, out var slot))
+            {
+                WaitUntilCompleted(slot);
+            }
+        }
+
+        private void LoadPackageAsync(in SIndex referenceIndex)
+        {
+            if (!_packages.TryGetValue(referenceIndex, out var slot))
+            {
+                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
+                return;
+            }
+            VerifyState(slot.name);
+            slot.Load();
+        }
+
+        /// <summary>
+        /// [threading] 卸载 AssetBundle 
+        /// </summary>
+        private void UnloadPackage(SIndex referenceIndex)
+        {
+            if (_mainThreadId != Thread.CurrentThread.ManagedThreadId)
+            {
+                Scheduler.Get().Post(() =>
+                {
+                    if (_packages.TryGetValue(referenceIndex, out var slot))
+                    {
+                        slot.Unload();
+                    }
+                });
+            }
+            else
+            {
+                if (_packages.TryGetValue(referenceIndex, out var slot))
+                {
+                    slot.Unload();
+                }
+            }
+        }
+
+        // private Stream OpenRead(in SIndex referenceIndex, string assetName)
+        // {
+        //     VerifyState(assetName);
+        //     if (_packages.TryGetValue(referenceIndex, out var slot))
+        //     {
+        //         return slot.OpenRead(assetName);
+        //     }
+        //     return default;
+        // }
+
+        private object LoadAsset(in SIndex referenceIndex, string assetName)
         {
             VerifyState(assetName);
             if (_packages.TryGetValue(referenceIndex, out var slot))
@@ -93,62 +161,6 @@ namespace Iris.ContentManagement.Internal
             if (_packages.TryGetValue(referenceIndex, out var slot))
             {
                 slot.RequestAssetAsync(assetName, payload);
-            }
-        }
-
-        //NOTE will remove the last callback
-        private void LoadPackageSync(in SIndex referenceIndex)
-        {
-            LoadPackageAsync(referenceIndex);
-            if (_packages.TryGetValue(referenceIndex, out var slot))
-            {
-                slot.WaitUntilCompleted();
-            }
-        }
-
-        private void Bind(in SIndex referenceIndex, IPackageRequestHandler callback)
-        {
-            if (!_packages.TryGetValue(referenceIndex, out var slot))
-            {
-                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
-                return;
-            }
-            VerifyState(slot.name);
-            slot.Bind(callback);
-        }
-
-        private void LoadPackageAsync(in SIndex referenceIndex)
-        {
-            if (!_packages.TryGetValue(referenceIndex, out var slot))
-            {
-                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
-                return;
-            }
-            VerifyState(slot.name);
-            slot.Load(true);
-        }
-
-        /// <summary>
-        /// [threading] 卸载 AssetBundle 
-        /// </summary>
-        private void UnloadAssetBundle(SIndex referenceIndex)
-        {
-            if (_mainThreadId != Thread.CurrentThread.ManagedThreadId)
-            {
-                Scheduler.Get().Post(() =>
-                {
-                    if (_packages.TryGetValue(referenceIndex, out var slot))
-                    {
-                        slot.Unload(true);
-                    }
-                });
-            }
-            else
-            {
-                if (_packages.TryGetValue(referenceIndex, out var slot))
-                {
-                    slot.Unload(true);
-                }
             }
         }
     } // - class AssetBundleManager

@@ -12,13 +12,15 @@ namespace Iris.ContentManagement
 
         private ContentSystem()
         {
-            _manager = new Internal.EdContentManager();
+            Internal.Scheduler.Initialize();
+            _manager = new Internal.EdSimulatedContentManager();
             // _manager = new Internal.DownloadableContentManager(_)
         }
 
         public void Shutdown()
         {
             _manager.Shutdown();
+            Internal.Scheduler.Shutdown();
         }
 
         public AssetHandle GetAsset(string assetPath) => new AssetHandle(_manager.GetAsset(assetPath));

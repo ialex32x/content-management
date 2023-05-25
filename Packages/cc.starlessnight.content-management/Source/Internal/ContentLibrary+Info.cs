@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Iris.ContentManagement.Internal
 {
     using Iris.ContentManagement.Utility;
-    
+
     /// <summary>
     /// 内容库 (最新版本信息)
     /// </summary>
@@ -230,8 +230,10 @@ namespace Iris.ContentManagement.Internal
 
             public readonly bool isValid => _db.IsValidEntry(_index);
 
+            // file name with extension
             public readonly string name => _db._entries.TryGetValue(_index, out var state) ? state.name : default;
 
+            // full path
             public readonly string fullName => _db._entries.TryGetValue(_index, out var state) ? state.entryPath : default;
 
             public readonly SIndex index => _index;

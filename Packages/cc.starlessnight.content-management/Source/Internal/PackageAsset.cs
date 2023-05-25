@@ -4,21 +4,27 @@ namespace Iris.ContentManagement.Internal
 {
     using Iris.ContentManagement.Utility;
 
-    public sealed class UnityAsset : IAsset, IUnityAssetRequestHandler
+    public sealed class PackageAsset : IAsset, IPackageAssetRequestHandler
     {
         private string _assetPath;
         private EAssetState _state;
-        private UnityEngine.Object _cached;
-        private AssetBundlePackage _package;
+        private object _cached;
+        private UPackage _package;
         private SIndex _assetRequestHandlerIndex;
         private SList<IAssetRequestHandler> _handlers = new();
 
-        public EAssetState state => _state;
+        public bool isCompleted => _state == EAssetState.Loaded || _state == EAssetState.Invalid;
 
-        public UnityAsset(AssetBundlePackage package, string assetPath)
+        internal PackageAsset(UPackage package, string assetPath)
         {
             _assetPath = assetPath;
             _package = package;
+        }
+
+        public object Get()
+        {
+            RequestSyncLoad();
+            return _cached;
         }
 
         public void RequestSyncLoad()
@@ -28,10 +34,16 @@ namespace Iris.ContentManagement.Internal
                 case EAssetState.Loaded:
                     return;
                 case EAssetState.Created:
+                    _state = EAssetState.Loading;
+                    ((IPackageAssetRequestHandler)this).OnRequestCompleted(_package.LoadAssetSync(_assetPath));
+                    return;
                 case EAssetState.Loading:
                     {
-                        _package.CancelAssetRequest(_assetRequestHandlerIndex);
-                        ((IUnityAssetRequestHandler)this).OnRequestCompleted(_package.LoadAssetSync(_assetPath));
+                        while (!isCompleted)
+                        {
+                            Utility.Logger.Debug("wait for pending request {0}", _assetPath);
+                            Scheduler.ForceUpdate();
+                        }
                         return;
                     }
                 default: Utility.Assert.Never(); return;
@@ -50,34 +62,29 @@ namespace Iris.ContentManagement.Internal
             switch (_state)
             {
                 case EAssetState.Created:
-                    {
-                        _state = EAssetState.Loading;
-                        index = _handlers.Add(handler);
-                        _package.RequestAssetAsync(ref _assetRequestHandlerIndex, _assetPath, this);
-                        return;
-                    }
+                    _state = EAssetState.Loading;
+                    index = _handlers.Add(handler);
+                    _package.RequestAssetAsync(ref _assetRequestHandlerIndex, _assetPath, this);
+                    return;
                 case EAssetState.Loaded:
-                    {
-                        index = SIndex.None;
-                        handler.OnRequestCompleted();
-                        return;
-                    }
+                    index = SIndex.None;
+                    handler.OnRequestCompleted();
+                    return;
                 case EAssetState.Loading:
-                    {
-                        index = _handlers.Add(handler);
-                        return;
-                    }
-                default: Utility.Assert.Never(); return;
+                    index = _handlers.Add(handler);
+                    return;
+                default:
+                    Utility.Assert.Never();
+                    return;
             }
         }
 
-        void IUnityAssetRequestHandler.OnRequestCompleted(UnityEngine.Object asset)
+        void IPackageAssetRequestHandler.OnRequestCompleted(object target)
         {
             if (_state != EAssetState.Loaded)
             {
                 _state = EAssetState.Loaded;
-                _cached = asset;
-
+                _cached = target;
                 while (_handlers.TryRemoveAt(0, out var handler))
                 {
                     handler.OnRequestCompleted();
@@ -85,15 +92,9 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        public UnityEngine.Object Get()
-        {
-            RequestSyncLoad();
-            return _cached;
-        }
-
         public override string ToString()
         {
-            return $"{nameof(UnityAsset)}({_assetPath} {_state})";
+            return $"{nameof(PackageAsset)}({_assetPath} {_state})";
         }
     }
 }

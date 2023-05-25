@@ -3,31 +3,35 @@ using System.Runtime.CompilerServices;
 
 namespace Iris.ContentManagement.Internal
 {
-    public struct AssetAwaiter<T> : ICriticalNotifyCompletion
-    where T : UnityEngine.Object
+    internal class AssetRequest : IAssetRequestHandler
     {
-        private bool _instantiate;
-        private IAsset _asset;
+        public IAsset asset;
+        public Exception exception;
+        public Action continuation;
+
+        public void OnRequestCompleted()
+        {
+            continuation?.Invoke();
+        }
+    }
+
+    public struct AssetLoadAwaiter<T> : ICriticalNotifyCompletion
+    where T : class
+    {
         private AssetRequest _request;
 
-        public bool IsCompleted => _asset.state == EAssetState.Loaded || _asset.state == EAssetState.Invalid;
+        public bool IsCompleted => _request.asset.isCompleted;
 
-        public AssetAwaiter(IAsset asset, bool instantiate)
+        public AssetLoadAwaiter(IAsset asset)
         {
-            _asset = asset;
-            _instantiate = instantiate;
-            _request = null;
+            _request = new AssetRequest();
+            _request.asset = asset;
 
             if (!this.IsCompleted)
             {
-                //TODO 发起异步加载请求
-                // _request = _asset.RequestAsyncLoad(_asset);
+                var index = Utility.SIndex.None;
+                _request.asset.RequestAsyncLoad(ref index, _request);
             }
-        }
-
-        public T GetResult()
-        {
-            return _instantiate ? UnityEngine.Object.Instantiate<T>((T)_asset.Get()) : (T)_asset.Get();
         }
 
         public void OnCompleted(Action continuation)
@@ -40,6 +44,56 @@ namespace Iris.ContentManagement.Internal
         {
             Utility.Assert.Debug(_request != null);
             _request.continuation = continuation;
+        }
+
+        public T GetResult()
+        {
+            if (_request.exception != null)
+            {
+                throw _request.exception;
+            }
+            return (T)_request.asset.Get();
+        }
+    }
+
+    public struct AssetInstantiateAwaiter<T> : ICriticalNotifyCompletion
+    where T : UnityEngine.Object
+    {
+        private AssetRequest _request;
+
+        public bool IsCompleted => _request.asset.isCompleted;
+
+        public AssetInstantiateAwaiter(IAsset asset)
+        {
+            _request = new AssetRequest();
+            _request.asset = asset;
+
+            if (!this.IsCompleted)
+            {
+                var index = Utility.SIndex.None;
+                _request.asset.RequestAsyncLoad(ref index, _request);
+            }
+        }
+
+        public void OnCompleted(Action continuation)
+        {
+            Utility.Assert.Debug(_request != null);
+            _request.continuation = continuation;
+        }
+
+        public void UnsafeOnCompleted(Action continuation)
+        {
+            Utility.Assert.Debug(_request != null);
+            _request.continuation = continuation;
+        }
+
+        public T GetResult()
+        {
+            if (_request.exception != null)
+            {
+                throw _request.exception;
+            }
+            return UnityEngine.Object.Instantiate<T>((T)_request.asset.Get());
         }
     }
 }
