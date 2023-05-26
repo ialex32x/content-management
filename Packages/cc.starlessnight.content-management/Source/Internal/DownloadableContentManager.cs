@@ -3,19 +3,17 @@ using System.Collections.Generic;
 
 namespace Iris.ContentManagement.Internal
 {
-    using Iris.ContentManagement.Utility;
-
     public class DownloadableContentManager : IContentManager
     {
         private ContentLibrary _library;
         private IWebRequestQueue _downloader;
-        private LocalStorage _storage;
+        private Cache.LocalStorage _storage;
         private PackageManager _packageManager;
 
         private Dictionary<string, WeakReference<UPackage>> _cachedPackages = new();
         private Dictionary<string, WeakReference<IAsset>> _cachedAssets = new();
 
-        public DownloadableContentManager(ContentLibrary library, IFileCache fileCache, LocalStorage storage, IWebRequestQueue downloader)
+        public DownloadableContentManager(ContentLibrary library, Cache.IFileCache fileCache, Cache.LocalStorage storage, IWebRequestQueue downloader)
         {
             _library = library;
             _storage = storage;

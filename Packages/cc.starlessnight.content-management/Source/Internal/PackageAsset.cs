@@ -6,6 +6,14 @@ namespace Iris.ContentManagement.Internal
 
     public sealed class PackageAsset : IAsset, IPackageAssetRequestHandler
     {
+        private enum EAssetState
+        {
+            Created,
+            Loading,
+            Loaded,
+            Invalid,
+        }
+
         private string _assetPath;
         private EAssetState _state;
         private object _cached;
@@ -39,12 +47,12 @@ namespace Iris.ContentManagement.Internal
                     return;
                 case EAssetState.Loading:
                     {
-                        Utility.Logger.Debug("wait for pending request {0}", _assetPath);
-                        ContentSystem.Scheduler.ForceUpdate(() => !isCompleted);
-                        Utility.Logger.Debug("finish pending request {0}", _assetPath);
+                        Utility.SLogger.Debug("wait for pending request {0}", _assetPath);
+                        ContentSystem.Scheduler.WaitUntilCompleted(() => isCompleted);
+                        Utility.SLogger.Debug("finish pending request {0}", _assetPath);
                         return;
                     }
-                default: Utility.Assert.Never(); return;
+                default: Utility.SAssert.Never(); return;
             }
         }
 
@@ -72,7 +80,7 @@ namespace Iris.ContentManagement.Internal
                     index = _handlers.Add(handler);
                     return;
                 default:
-                    Utility.Assert.Never();
+                    Utility.SAssert.Never();
                     return;
             }
         }

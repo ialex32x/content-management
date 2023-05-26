@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
     public class OSFileSystem : IFileSystem
     {
@@ -34,7 +34,7 @@ namespace Iris.ContentManagement.Internal
             try { File.Delete(osFilePath); }
             catch (Exception exception)
             {
-                Utility.Logger.Exception(exception, "{0} failed to delete file", nameof(OSFileSystem));
+                Utility.SLogger.Exception(exception, "{0} failed to delete file", nameof(OSFileSystem));
             }
             return true;
         }

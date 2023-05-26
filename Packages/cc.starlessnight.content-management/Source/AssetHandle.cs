@@ -1,8 +1,5 @@
-using System;
-
 namespace Iris.ContentManagement
 {
-    using Iris.ContentManagement.Utility;
     using Iris.ContentManagement.Internal;
 
     public struct AsyncLoadInstruction<T>

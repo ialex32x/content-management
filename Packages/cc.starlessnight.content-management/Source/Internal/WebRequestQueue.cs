@@ -1,5 +1,6 @@
 namespace Iris.ContentManagement.Internal
 {
+    using Cache;
     using Iris.ContentManagement.Utility;
 
     public interface IWebRequestQueue

@@ -1,12 +1,7 @@
 using System;
-using System.IO;
-using System.Threading;
 
 namespace Iris.ContentManagement.Internal
 {
-    using Iris.ContentManagement.Utility;
-    using UnityEngine;
-
     public sealed partial class PackageManager
     {
         internal readonly struct PackageHandle : IEquatable<PackageHandle>

@@ -1,19 +1,16 @@
-using System;
-using System.Collections.Generic;
-
 namespace Iris.ContentManagement
 {
     public sealed class ContentSystem
     {
         private static ContentSystem _system;
         private IContentManager _manager;
-        private Internal.Scheduler _scheduler;
+        private IScheduler _scheduler;
 
-        public static Internal.Scheduler Scheduler => _system._scheduler;
+        public static IScheduler Scheduler => _system._scheduler;
 
         private ContentSystem()
         {
-            _scheduler = new Internal.Scheduler();
+            _scheduler = new Utility.DefaultScheduler();
             _manager = new Internal.EdSimulatedContentManager();
             // _manager = new Internal.DownloadableContentManager(_)
         }

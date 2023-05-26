@@ -38,12 +38,12 @@ namespace Iris.ContentManagement.Internal
                 if (IsUnityObject(_assetPath))
                 {
                     _cache = UnityEditor.AssetDatabase.LoadMainAssetAtPath(_assetPath);
-                    Utility.Logger.Debug("{0} read as asset {1}", nameof(EdSimulatedAsset), _assetPath);
+                    Utility.SLogger.Debug("{0} read as asset {1}", nameof(EdSimulatedAsset), _assetPath);
                     return;
                 }
 #endif
                 _cache = System.IO.File.OpenRead(_assetPath);
-                Utility.Logger.Debug("{0} read as file stream {1}", nameof(EdSimulatedAsset), _assetPath);
+                Utility.SLogger.Debug("{0} read as file stream {1}", nameof(EdSimulatedAsset), _assetPath);
             }
         }
 

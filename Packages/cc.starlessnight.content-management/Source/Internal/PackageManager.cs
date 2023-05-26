@@ -1,11 +1,10 @@
 using System;
-using System.IO;
 using System.Threading;
 
 namespace Iris.ContentManagement.Internal
 {
-    using Iris.ContentManagement.Utility;
-    using UnityEngine;
+    using Cache;
+    using Utility;
 
     // 管理 AssetBundle 的加载
     public sealed partial class PackageManager
@@ -29,7 +28,7 @@ namespace Iris.ContentManagement.Internal
 
         internal PackageHandle CreatePackage(in ContentLibrary.PackageInfo packageInfo)
         {
-            Utility.Assert.Debug(packageInfo.type == EPackageType.Zip);
+            Utility.SAssert.Debug(packageInfo.type == EPackageType.Zip);
             var index = _packages.Add(default);
             IPackageSlot slot = packageInfo.type == EPackageType.AssetBundle
                 ? new AssetBundleSlot(this, index, packageInfo.name, packageInfo.digest)
@@ -72,16 +71,16 @@ namespace Iris.ContentManagement.Internal
 
         private void WaitUntilCompleted(IPackageSlot slot)
         {
-            Utility.Logger.Debug("wait for pending package {0}", slot.name);
-            ContentSystem.Scheduler.ForceUpdate(() => !slot.isCompleted);
-            Utility.Logger.Debug("finish pending package {0}", slot.name);
+            Utility.SLogger.Debug("wait for pending package {0}", slot.name);
+            ContentSystem.Scheduler.WaitUntilCompleted(() => slot.isCompleted);
+            Utility.SLogger.Debug("finish pending package {0}", slot.name);
         }
 
         private void Bind(in SIndex referenceIndex, IPackageRequestHandler callback)
         {
             if (!_packages.TryGetValue(referenceIndex, out var slot))
             {
-                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
+                Utility.SLogger.Error("invalid assetbundle reference {0}", referenceIndex);
                 return;
             }
             VerifyState(slot.name);
@@ -102,7 +101,7 @@ namespace Iris.ContentManagement.Internal
         {
             if (!_packages.TryGetValue(referenceIndex, out var slot))
             {
-                Utility.Logger.Error("invalid assetbundle reference {0}", referenceIndex);
+                Utility.SLogger.Error("invalid assetbundle reference {0}", referenceIndex);
                 return;
             }
             VerifyState(slot.name);

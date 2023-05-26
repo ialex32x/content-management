@@ -1,9 +1,9 @@
 using System;
 using System.IO;
-using System.Threading;
 
 namespace Iris.ContentManagement.Internal
 {
+    using Cache;
     using Iris.ContentManagement.Utility;
     using UnityEngine;
 
@@ -39,8 +39,8 @@ namespace Iris.ContentManagement.Internal
 
             private void OnReleased()
             {
-                Utility.Assert.Debug(this._state == EState.None);
-                Utility.Assert.Debug(this._assetBundle == null);
+                Utility.SAssert.Debug(this._state == EState.None);
+                Utility.SAssert.Debug(this._assetBundle == null);
                 this._manager.ReleaseSlot(this._index);
                 this._webRequest.Unbind();
                 this._handler.SetTarget(null);
@@ -52,13 +52,13 @@ namespace Iris.ContentManagement.Internal
 
             public object LoadAsset(string assetName)
             {
-                Utility.Assert.Debug(this._state == EState.Loaded);
+                Utility.SAssert.Debug(this._state == EState.Loaded);
                 return this._assetBundle != null ? this._assetBundle.LoadAsset(assetName) : default;
             }
 
             public void RequestAssetAsync(string assetName, SIndex payload)
             {
-                Utility.Assert.Debug(this._state == EState.Loaded);
+                Utility.SAssert.Debug(this._state == EState.Loaded);
                 var request = this._assetBundle != null ? this._assetBundle.LoadAssetAsync(assetName) : default;
                 if (request == null)
                 {
@@ -96,14 +96,14 @@ namespace Iris.ContentManagement.Internal
                         break;
                     case EState.UnloadAfterLoading:
                         // resurrect, 仅在 loading 转 unload 时出现, 恢复加载中标记即可
-                        Utility.Assert.Debug(this._assetBundle == null);
+                        Utility.SAssert.Debug(this._assetBundle == null);
                         this._state = EState.Loading;
                         break;
                     case EState.Unloading:
                         this._state = EState.LoadAfterUnloading;
                         break;
                     default:
-                        Utility.Assert.Never();
+                        Utility.SAssert.Never();
                         break;
                 }
             }
@@ -147,7 +147,7 @@ namespace Iris.ContentManagement.Internal
                     case EState.None:               // 已卸载
                         break;
                     default:
-                        Utility.Assert.Never();
+                        Utility.SAssert.Never();
                         break;
                 }
             }
@@ -155,7 +155,7 @@ namespace Iris.ContentManagement.Internal
             // 优先打开本地缓存文件流, 其次下载文件 (完成后重新尝试打开本地缓存文件流)
             private void LoadPackageFileImpl(bool shouldDownloadMissing)
             {
-                Utility.Assert.Debug(this._state == EState.Loading);
+                Utility.SAssert.Debug(this._state == EState.Loading);
                 var stream = _manager._fileCache.OpenRead(this.name, this.digest);
                 if (stream != null)
                 {
@@ -181,7 +181,7 @@ namespace Iris.ContentManagement.Internal
             {
                 return result =>
                 {
-                    Utility.Assert.Debug(this._webRequest.info == result.info, "callback on incorrect web request");
+                    Utility.SAssert.Debug(this._webRequest.info == result.info, "callback on incorrect web request");
                     this._webRequest.Unbind();
                     switch (this._state)
                     {
@@ -194,7 +194,7 @@ namespace Iris.ContentManagement.Internal
                             OnReleased();
                             break;
                         default:
-                            Utility.Assert.Never();
+                            Utility.SAssert.Never();
                             break;
                     }
                 };
@@ -218,7 +218,7 @@ namespace Iris.ContentManagement.Internal
                             Unload();
                             break;
                         default:
-                            Utility.Assert.Never();
+                            Utility.SAssert.Never();
                             break;
                     }
                 };
@@ -234,14 +234,14 @@ namespace Iris.ContentManagement.Internal
                         break;
                     case EState.LoadAfterUnloading:
                         // 需要重新加载, 仅清理相关字段即可
-                        Utility.Assert.Debug(!this._webRequest.isValid);
+                        Utility.SAssert.Debug(!this._webRequest.isValid);
                         this._state = EState.None;
                         this._assetBundle = null;
                         this._stream?.Close();
                         Load();
                         break;
                     default:
-                        Utility.Assert.Never();
+                        Utility.SAssert.Never();
                         break;
                 }
             }

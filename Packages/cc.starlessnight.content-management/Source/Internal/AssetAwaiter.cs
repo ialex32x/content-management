@@ -41,13 +41,13 @@ namespace Iris.ContentManagement.Internal
 
         public void OnCompleted(Action continuation)
         {
-            Utility.Assert.Debug(_request != null);
+            Utility.SAssert.Debug(_request != null);
             _request.continuation = continuation;
         }
 
         public void UnsafeOnCompleted(Action continuation)
         {
-            Utility.Assert.Debug(_request != null);
+            Utility.SAssert.Debug(_request != null);
             _request.continuation = continuation;
         }
 
@@ -82,13 +82,13 @@ namespace Iris.ContentManagement.Internal
 
         public void OnCompleted(Action continuation)
         {
-            Utility.Assert.Debug(_request != null);
+            Utility.SAssert.Debug(_request != null);
             _request.continuation = continuation;
         }
 
         public void UnsafeOnCompleted(Action continuation)
         {
-            Utility.Assert.Debug(_request != null);
+            Utility.SAssert.Debug(_request != null);
             _request.continuation = continuation;
         }
 

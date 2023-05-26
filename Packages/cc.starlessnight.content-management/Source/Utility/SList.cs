@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 
 namespace Iris.ContentManagement.Utility
@@ -133,7 +132,7 @@ namespace Iris.ContentManagement.Utility
                     while (current >= 0)
                     {
                         ref var slot = ref this._slots[current];
-                        Assert.Debug(slot.isValid);
+                        SAssert.Debug(slot.isValid);
                         if (index-- == 0)
                         {
                             return slot.value;
@@ -151,7 +150,7 @@ namespace Iris.ContentManagement.Utility
                     while (current >= 0)
                     {
                         ref var slot = ref this._slots[current];
-                        Assert.Debug(slot.isValid);
+                        SAssert.Debug(slot.isValid);
                         if (index-- == 0)
                         {
                             slot.value = value;
@@ -244,12 +243,12 @@ namespace Iris.ContentManagement.Utility
             while (current >= 0)
             {
                 ref var slot = ref this._slots[current];
-                Assert.Debug(slot.isValid);
+                SAssert.Debug(slot.isValid);
                 array[fillIndex++] = slot.value;
                 current = slot.next;
             }
 
-            Assert.Debug(fillIndex == _usedSize);
+            SAssert.Debug(fillIndex == _usedSize);
             return array;
         }
 
@@ -279,7 +278,7 @@ namespace Iris.ContentManagement.Utility
         public void Unlock()
         {
             --_lock;
-            Assert.Debug(_lock >= 0);
+            SAssert.Debug(_lock >= 0);
         }
 
         public bool IsValidIndex(in SIndex index)
@@ -366,13 +365,13 @@ namespace Iris.ContentManagement.Utility
 
         public SIndex UnsafeIndexAt(int index, out T value)
         {
-            Assert.Debug(index >= 0 && index < _usedSize);
+            SAssert.Debug(index >= 0 && index < _usedSize);
 
             var current = _firstIndex;
             while (current >= 0)
             {
                 ref var slot = ref this._slots[current];
-                Assert.Debug(slot.isValid);
+                SAssert.Debug(slot.isValid);
                 if (index-- == 0)
                 {
                     value = slot.value;
@@ -388,7 +387,7 @@ namespace Iris.ContentManagement.Utility
         public SIndex UnsafeAdd(T value)
         {
             GrowIfNeeded(1);
-            Assert.Debug(_freeIndex != -1);
+            SAssert.Debug(_freeIndex != -1);
 
             var index = _freeIndex;
             ref var slot = ref _slots[index];
@@ -416,13 +415,13 @@ namespace Iris.ContentManagement.Utility
 
         public SIndex Add(T value)
         {
-            Assert.Debug(_lock == 0);
+            SAssert.Debug(_lock == 0);
             return UnsafeAdd(value);
         }
 
         public void Insert(in SIndex index, T value)
         {
-            Assert.Debug(_lock == 0);
+            SAssert.Debug(_lock == 0);
             if (index.index < 0 || index.index >= _slots.Length)
             {
                 throw new IndexOutOfRangeException();
@@ -459,22 +458,22 @@ namespace Iris.ContentManagement.Utility
 
         public void Insert(int index, T value)
         {
-            Assert.Debug(index >= 0 && index <= _usedSize);
+            SAssert.Debug(index >= 0 && index <= _usedSize);
             if (_usedSize == index)
             {
                 Add(value);
                 return;
             }
 
-            Assert.Debug(_lock == 0);
+            SAssert.Debug(_lock == 0);
             GrowIfNeeded(1);
-            Assert.Debug(_freeIndex != -1);
+            SAssert.Debug(_freeIndex != -1);
 
             var current = _firstIndex;
             while (current >= 0)
             {
                 ref var slot = ref this._slots[current];
-                Assert.Debug(slot.isValid);
+                SAssert.Debug(slot.isValid);
                 if (index-- == 0)
                 {
                     var newIndex = _freeIndex;
@@ -518,14 +517,14 @@ namespace Iris.ContentManagement.Utility
                 while (current >= 0)
                 {
                     ref var slot = ref this._slots[current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     if (index-- == 0)
                     {
                         return RemoveAt(new SIndex(current, slot.revision));
                     }
                     current = slot.next;
                 }
-                Assert.Never();
+                SAssert.Never();
             }
 
             return false;
@@ -555,7 +554,7 @@ namespace Iris.ContentManagement.Utility
                 while (current >= 0)
                 {
                     ref var slot = ref this._slots[current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     if (index-- == 0)
                     {
                         return TryRemoveAt(new SIndex(current, slot.revision), out value);
@@ -575,7 +574,7 @@ namespace Iris.ContentManagement.Utility
 
                 if (slot.isValid && slot.revision == index.revision)
                 {
-                    Assert.Debug(_lock == 0);
+                    SAssert.Debug(_lock == 0);
 
                     var next = slot.next;
                     var previous = slot.previous;
@@ -619,15 +618,15 @@ namespace Iris.ContentManagement.Utility
         {
             if (_usedSize > 0)
             {
-                Assert.Debug(_lock == 0);
-                Assert.Debug(_firstIndex >= 0);
+                SAssert.Debug(_lock == 0);
+                SAssert.Debug(_firstIndex >= 0);
 
                 while (_firstIndex >= 0)
                 {
                     var index = _firstIndex;
                     ref var slot = ref this._slots[index];
 
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     _firstIndex = slot.next;
                     slot.next = _freeIndex;
                     slot.value = default;
@@ -635,7 +634,7 @@ namespace Iris.ContentManagement.Utility
                     // ++slot.revision;
                     _freeIndex = index;
                 }
-                Assert.Debug(_firstIndex == -1);
+                SAssert.Debug(_firstIndex == -1);
                 _lastIndex = -1;
                 _usedSize = 0;
                 ++_version;
@@ -655,7 +654,7 @@ namespace Iris.ContentManagement.Utility
                 while (current >= 0)
                 {
                     ref var slot = ref this._slots[current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     if ((object)slot.value == null)
                     {
                         return current;
@@ -670,7 +669,7 @@ namespace Iris.ContentManagement.Utility
                 while (current >= 0)
                 {
                     ref var slot = ref this._slots[current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     if (equalityComparer.Equals(slot.value, item))
                     {
                         return current;
@@ -690,7 +689,7 @@ namespace Iris.ContentManagement.Utility
                 while (current >= 0)
                 {
                     ref var slot = ref this._slots[current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     if ((object)slot.value == null)
                     {
                         return current;
@@ -705,7 +704,7 @@ namespace Iris.ContentManagement.Utility
                 while (current >= 0)
                 {
                     ref var slot = ref this._slots[current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     if (equalityComparer.Equals(slot.value, item))
                     {
                         return current;
@@ -748,7 +747,7 @@ namespace Iris.ContentManagement.Utility
             while (current >= 0)
             {
                 ref var slot = ref this._slots[current];
-                Assert.Debug(slot.isValid);
+                SAssert.Debug(slot.isValid);
                 if (pred(slot.value))
                 {
                     return new SIndex(current, slot.revision);
@@ -767,7 +766,7 @@ namespace Iris.ContentManagement.Utility
             while (current >= 0)
             {
                 ref var slot = ref this._slots[current];
-                Assert.Debug(slot.isValid);
+                SAssert.Debug(slot.isValid);
                 result = fn(slot.value, result);
                 current = slot.next;
             }
@@ -840,7 +839,7 @@ namespace Iris.ContentManagement.Utility
                 {
                     VerifyState();
                     ref var slot = ref this._list._slots[_current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     return (object)slot.value;
                 }
             }
@@ -875,7 +874,7 @@ namespace Iris.ContentManagement.Utility
                 get
                 {
                     ref var slot = ref this._list._slots[_current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     return slot.value;
                 }
             }
@@ -943,7 +942,7 @@ namespace Iris.ContentManagement.Utility
                 {
                     VerifyState();
                     ref var slot = ref this._list._slots[_current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     return new SIndex(_current, slot.revision);
                 }
             }
@@ -979,7 +978,7 @@ namespace Iris.ContentManagement.Utility
                 {
                     VerifyState();
                     ref var slot = ref this._list._slots[_current];
-                    Assert.Debug(slot.isValid);
+                    SAssert.Debug(slot.isValid);
                     return (object)new SIndex(_current, slot.revision);
                 }
             }

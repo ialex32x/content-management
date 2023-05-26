@@ -1,9 +1,8 @@
 using System.Diagnostics;
-using System.IO;
 
 namespace Iris.ContentManagement.Utility
 {
-    public static class Assert
+    public static class SAssert
     {
         /// <summary>
         /// 发布期断言, 在定义为 CONTENTMANAGEMENT_RELEASE 时仅报错, 不暂停, 否则等价于 Debug 断言 
@@ -22,7 +21,7 @@ namespace Iris.ContentManagement.Utility
             text += stackTrace.ToString();
 
 #if CONTENTMANAGEMENT_DEBUG
-            Logger.Fatal(text);
+            SLogger.Fatal(text);
 #else 
             Logger.Error(text);
 #endif
@@ -49,7 +48,7 @@ namespace Iris.ContentManagement.Utility
             text += stackTrace.ToString();
 
 #if CONTENTMANAGEMENT_DEBUG
-            Logger.Fatal(text);
+            SLogger.Fatal(text);
 #else 
             Logger.Error(text);
 #endif
@@ -74,7 +73,7 @@ namespace Iris.ContentManagement.Utility
             }
             text += stackTrace.ToString();
 
-            Logger.Fatal(text);
+            SLogger.Fatal(text);
         }
 
         public static bool Ensure(bool condition, string message = "")
@@ -94,7 +93,7 @@ namespace Iris.ContentManagement.Utility
             }
             text += stackTrace.ToString();
 
-            Logger.Fatal(text);
+            SLogger.Fatal(text);
 #endif
             return false;
         }

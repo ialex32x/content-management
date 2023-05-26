@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Cache
 {
     using Iris.ContentManagement.Utility;
     using Stream = System.IO.Stream;
@@ -75,19 +75,19 @@ namespace Iris.ContentManagement.Internal
                     var line = reader.ReadLine();
                     if (!TryParseState(line, out var entryName, out var fileName, out var digest))
                     {
-                        Utility.Logger.Warning("unable to parse storage entry: {0}", line);
+                        Utility.SLogger.Warning("unable to parse storage entry: {0}", line);
                         continue;
                     }
                     if (!_mappings.TryGetValue(entryName, out var index))
                     {
                         if (!_fileSystem.Exists(fileName))
                         {
-                            Utility.Logger.Warning("not existed storage entry: {0}", line);
+                            Utility.SLogger.Warning("not existed storage entry: {0}", line);
                             continue;
                         }
                         index = _files.Add(new(this, fileName, digest));
                         _mappings.Add(entryName, index);
-                        Utility.Logger.Debug("load storage entry {0}, {1}, {2}", entryName, fileName, digest);
+                        Utility.SLogger.Debug("load storage entry {0}, {1}, {2}", entryName, fileName, digest);
                     }
                 }
             }
@@ -116,7 +116,7 @@ namespace Iris.ContentManagement.Internal
                             if (!string.IsNullOrEmpty(line))
                             {
                                 writer.WriteLine(line);
-                                Utility.Logger.Debug("save storage entry {0}", line);
+                                Utility.SLogger.Debug("save storage entry {0}", line);
                             }
                         }
                     }
@@ -125,7 +125,7 @@ namespace Iris.ContentManagement.Internal
                 }
                 catch (Exception exception)
                 {
-                    Utility.Logger.Exception(exception, "failed to save local storage state");
+                    Utility.SLogger.Exception(exception, "failed to save local storage state");
                 }
                 finally
                 {
@@ -153,7 +153,7 @@ namespace Iris.ContentManagement.Internal
                     var n = handle.CloseAnyway();
                     if (n != 0)
                     {
-                        Utility.Logger.Warning("cleaning up open stream: {0}", handle.fileName);
+                        Utility.SLogger.Warning("cleaning up open stream: {0}", handle.fileName);
                     }
                 }
             }
@@ -251,14 +251,14 @@ namespace Iris.ContentManagement.Internal
                 }
                 if (file.isWriting)
                 {
-                    Utility.Logger.Error("can not delete file which is writing {0}", file.fileName);
+                    Utility.SLogger.Error("can not delete file which is writing {0}", file.fileName);
                     return false;
                 }
                 _dirty = true;
                 _files.RemoveAt(index);
                 _mappings.Remove(entryName);
                 file.CloseAnyway();
-                Utility.Logger.Debug("delete file {0}", file.fileName);
+                Utility.SLogger.Debug("delete file {0}", file.fileName);
                 if (!_fileSystem.DeleteFile(file.fileName))
                 {
                     return false;
@@ -286,7 +286,7 @@ namespace Iris.ContentManagement.Internal
                 }
                 if (check && file.digest != digest)
                 {
-                    Utility.Logger.Error("can not read corrupted file {0} {1} != {2}", file.fileName, file.digest, digest);
+                    Utility.SLogger.Error("can not read corrupted file {0} {1} != {2}", file.fileName, file.digest, digest);
                     return false;
                 }
                 if (!_fileSystem.Exists(file.fileName))
@@ -351,18 +351,18 @@ namespace Iris.ContentManagement.Internal
                 }
                 if (check && file.digest != digest)
                 {
-                    Utility.Logger.Error("can not read corrupted file {0} {1} != {2}", file.fileName, file.digest, digest);
+                    Utility.SLogger.Error("can not read corrupted file {0} {1} != {2}", file.fileName, file.digest, digest);
                     return default;
                 }
                 if (file.isWriting)
                 {
-                    Utility.Logger.Error("can not read file which is writing {0}", file.fileName);
+                    Utility.SLogger.Error("can not read file which is writing {0}", file.fileName);
                     return default;
                 }
                 var stream = file.BeginRead();
                 if (stream == null)
                 {
-                    Utility.Logger.Error("can not open to read {0}", file.fileName);
+                    Utility.SLogger.Error("can not open to read {0}", file.fileName);
                     return default;
                 }
                 return new ReaderStream(this, index, stream);
@@ -427,7 +427,7 @@ namespace Iris.ContentManagement.Internal
                     _stream.Seek(0, SeekOrigin.Begin);
                     _checksum = Utility.Checksum.ComputeChecksum(_stream);
                     _stream.Position = pos > _stream.Length ? _stream.Length : pos;
-                    Utility.Logger.Info("check content in cache {0} {1} ({2})", _entryName, _stream.Length, _checksum);
+                    Utility.SLogger.Info("check content in cache {0} {1} ({2})", _entryName, _stream.Length, _checksum);
                 }
                 else
                 {
@@ -623,7 +623,7 @@ namespace Iris.ContentManagement.Internal
                     var newDigest = new ContentDigest(length, checksum);
                     if (_digest != newDigest)
                     {
-                        Utility.Logger.Info("update local storage: {0} {1} => {2}", _fileName, _digest, newDigest);
+                        Utility.SLogger.Info("update local storage: {0} {1} => {2}", _fileName, _digest, newDigest);
                         _digest = newDigest;
                     }
                     stream.Close();
@@ -668,7 +668,7 @@ namespace Iris.ContentManagement.Internal
                     }
                     catch (Exception exception)
                     {
-                        Utility.Logger.Exception(exception, "failed to close local storage stream {0}", _fileName);
+                        Utility.SLogger.Exception(exception, "failed to close local storage stream {0}", _fileName);
                     }
                 }
                 return n;

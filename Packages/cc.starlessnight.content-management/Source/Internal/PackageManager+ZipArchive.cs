@@ -1,11 +1,9 @@
 using System;
-using System.IO;
-using System.Threading;
 
 namespace Iris.ContentManagement.Internal
 {
+    using Cache;
     using Iris.ContentManagement.Utility;
-    using UnityEngine;
 
     public sealed partial class PackageManager
     {
@@ -55,8 +53,8 @@ namespace Iris.ContentManagement.Internal
 
             private void OnReleased()
             {
-                Utility.Assert.Debug(this._state == EState.None);
-                Utility.Assert.Debug(this._file == null);
+                Utility.SAssert.Debug(this._state == EState.None);
+                Utility.SAssert.Debug(this._file == null);
                 this._manager.ReleaseSlot(this._index);
                 this._webRequest.Unbind();
                 this._handler.SetTarget(null);
@@ -80,11 +78,11 @@ namespace Iris.ContentManagement.Internal
                         break;
                     case EState.UnloadAfterLoading:
                         // resurrect, 仅在 loading 转 unload 时出现, 恢复加载中标记即可
-                        Utility.Assert.Debug(this._file == null);
+                        Utility.SAssert.Debug(this._file == null);
                         this._state = EState.Loading;
                         break;
                     default:
-                        Utility.Assert.Never();
+                        Utility.SAssert.Never();
                         break;
                 }
             }
@@ -110,7 +108,7 @@ namespace Iris.ContentManagement.Internal
                     case EState.None:               // 已卸载
                         break;
                     default:
-                        Utility.Assert.Never();
+                        Utility.SAssert.Never();
                         break;
                 }
             }
@@ -118,7 +116,7 @@ namespace Iris.ContentManagement.Internal
             // 优先打开本地缓存文件流, 其次下载文件 (完成后重新尝试打开本地缓存文件流)
             private void LoadPackageFileImpl(bool shouldDownloadMissing)
             {
-                Utility.Assert.Debug(this._state == EState.Loading);
+                Utility.SAssert.Debug(this._state == EState.Loading);
                 var stream = _manager._fileCache.OpenRead(this.name, this.digest);
                 if (stream == null)
                 {
@@ -143,7 +141,7 @@ namespace Iris.ContentManagement.Internal
             {
                 return result =>
                 {
-                    Utility.Assert.Debug(this._webRequest.info == result.info, "callback on incorrect web request");
+                    Utility.SAssert.Debug(this._webRequest.info == result.info, "callback on incorrect web request");
                     this._webRequest.Unbind();
                     switch (this._state)
                     {
@@ -156,7 +154,7 @@ namespace Iris.ContentManagement.Internal
                             OnReleased();
                             break;
                         default:
-                            Utility.Assert.Never();
+                            Utility.SAssert.Never();
                             break;
                     }
                 };

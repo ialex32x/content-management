@@ -2,19 +2,18 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
-    using Iris.ContentManagement.Utility;
     using UnityEngine;
 
-    public class Scheduler
+    internal class DefaultScheduler : IScheduler
     {
         private int _mainThreadId;
         private ReaderWriterLockSlim _threadedActionsLock = new();
         private Queue<Action> _threadedActions = new();
         private Queue<Action> _actions = new();
 
-        internal Scheduler()
+        internal DefaultScheduler()
         {
             _mainThreadId = Thread.CurrentThread.ManagedThreadId;
 #if UNITY_EDITOR
@@ -24,7 +23,7 @@ namespace Iris.ContentManagement.Internal
                 return;
             }
 #endif
-            new GameObject(nameof(Scheduler)).AddComponent<SchedulerHost>().Bind(this);
+            new GameObject(nameof(IScheduler)).AddComponent<SchedulerHost>().Bind(this);
         }
 
         public void Shutdown()
@@ -43,9 +42,9 @@ namespace Iris.ContentManagement.Internal
             Thread.Sleep(50);
         }
 
-        public void ForceUpdate(Func<bool> isContinueFunc)
+        public void WaitUntilCompleted(Func<bool> isCompletedFunc)
         {
-            while (isContinueFunc())
+            while (!isCompletedFunc())
             {
                 OnUpdate();
                 Thread.Sleep(50);
@@ -66,7 +65,7 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        internal void OnUpdate()
+        public void OnUpdate()
         {
             var count = _actions.Count;
             while (count-- > 0)
@@ -77,7 +76,7 @@ namespace Iris.ContentManagement.Internal
                 }
                 catch (Exception exception)
                 {
-                    Utility.Logger.Exception(exception);
+                    Utility.SLogger.Exception(exception);
                     break;
                 }
             }
@@ -94,7 +93,7 @@ namespace Iris.ContentManagement.Internal
                     }
                     catch (Exception exception)
                     {
-                        Utility.Logger.Exception(exception);
+                        Utility.SLogger.Exception(exception);
                         break;
                     }
                 } while (--count > 0);

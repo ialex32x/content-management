@@ -1,6 +1,3 @@
-
-using Iris.ContentManagement.Utility;
-
 namespace Iris.ContentManagement.Internal
 {
     public interface IAsset

@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
 
 namespace Iris.ContentManagement.Internal
@@ -13,7 +12,7 @@ namespace Iris.ContentManagement.Internal
 
         public EdSimulatedContentManager()
         {
-            _rawFileSystem = new OSFileSystem();
+            _rawFileSystem = new Utility.OSFileSystem();
             _rawFileSystem.Load();
         }
 

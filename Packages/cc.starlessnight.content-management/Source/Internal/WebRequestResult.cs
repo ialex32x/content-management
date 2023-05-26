@@ -20,4 +20,6 @@ namespace Iris.ContentManagement.Internal
             this.statusCode = statusCode;
         }
     }
+    
+    public delegate void WebRequestAction(WebRequestResult result);
 }

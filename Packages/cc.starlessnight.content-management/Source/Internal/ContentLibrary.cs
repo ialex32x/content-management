@@ -44,7 +44,7 @@ namespace Iris.ContentManagement.Internal
             while (e.MoveNext())
             {
                 var package = e.Value.package;
-                Utility.Assert.Debug(package.isValid, "entry not included in any package " + e.Value.entryPath);
+                Utility.SAssert.Debug(package.isValid, "entry not included in any package " + e.Value.entryPath);
                 if (!remap.TryGetValue(package, out var list))
                 {
                     list = remap[package] = new HashSet<SIndex>();
@@ -55,7 +55,7 @@ namespace Iris.ContentManagement.Internal
 
         public PackageInfo AddPackage(string packageName, EPackageType type, in ContentDigest digest, string[] dependencies = null)
         {
-            Utility.Assert.Debug(!string.IsNullOrEmpty(packageName));
+            Utility.SAssert.Debug(!string.IsNullOrEmpty(packageName));
             if (!_cachedPackageMap.TryGetValue(packageName, out var packageIndex))
             {
                 packageIndex = _packages.Add(new PackageState(packageName, type, digest, dependencies));
@@ -63,14 +63,14 @@ namespace Iris.ContentManagement.Internal
             }
             else
             {
-                Utility.Logger.Warning("package already exists {0}", packageName);
+                Utility.SLogger.Warning("package already exists {0}", packageName);
             }
             return new(this, packageIndex);
         }
 
         public EntryInfo AddEntry(in PackageInfo packageInfo, string entryPath)
         {
-            Utility.Assert.Debug(packageInfo.isValid);
+            Utility.SAssert.Debug(packageInfo.isValid);
             return SetEntryPackage(AddEntry(entryPath), packageInfo);
         }
 
@@ -101,7 +101,7 @@ namespace Iris.ContentManagement.Internal
                 ref var entryState = ref _entries.UnsafeGetValueByRef(entryInfo.index);
                 if (entryState.package != packageInfo.index)
                 {
-                    Utility.Logger.Debug("{0} changed package {1} => {2}",
+                    Utility.SLogger.Debug("{0} changed package {1} => {2}",
                         entryState.entryPath,
                         GetPackageState(entryState.package), GetPackageState(packageInfo.index));
                     entryState.package = packageInfo.index;

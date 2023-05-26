@@ -102,7 +102,7 @@ namespace Iris.ContentManagement.Internal
                 }
             } while (true);
             var version = reader.ReadLine();
-            Utility.Logger.Debug("import contentlibrary v{0}", version);
+            Utility.SLogger.Debug("import contentlibrary v{0}", version);
         }
 
         private void ImportPackage(StreamReader reader, EPackageType type)

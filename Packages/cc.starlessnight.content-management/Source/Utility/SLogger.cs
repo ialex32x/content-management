@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Iris.ContentManagement.Utility
 {
-    public static class Logger
+    public static class SLogger
     {
         private static ILogHandler _handler;
 

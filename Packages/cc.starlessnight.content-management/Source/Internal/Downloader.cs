@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace Iris.ContentManagement.Internal
 {
+    using Cache;
     using Iris.ContentManagement.Utility;
-
-    public delegate void WebRequestAction(WebRequestResult result);
 
     public class Downloader : IWebRequestQueue
     {
@@ -42,7 +41,7 @@ namespace Iris.ContentManagement.Internal
             var lastRequest = Find(entryName);
             if (lastRequest != null)
             {
-                Utility.Logger.Warning("enqueued an existed entry", lastRequest);
+                Utility.SLogger.Warning("enqueued an existed entry", lastRequest);
                 return new(this, lastRequest.info, default);
             }
             else
@@ -69,9 +68,9 @@ namespace Iris.ContentManagement.Internal
         public void WaitUntilAllCompleted()
         {
             CheckMainThreadAccess();
-            Utility.Logger.Warning("wait all requests begin");
-            ContentSystem.Scheduler.ForceUpdate(() => _activeRequests.Count != 0 || _waitingRequests.Count != 0);
-            Utility.Logger.Warning("wait all requests end");
+            Utility.SLogger.Warning("wait all requests begin");
+            ContentSystem.Scheduler.WaitUntilCompleted(() => _activeRequests.Count == 0 && _waitingRequests.Count == 0);
+            Utility.SLogger.Warning("wait all requests end");
         }
 
         /// <summary>
@@ -85,13 +84,13 @@ namespace Iris.ContentManagement.Internal
 
             if (request != null)
             {
-                Utility.Logger.Warning("wait request begin {0}", entryName);
-                ContentSystem.Scheduler.ForceUpdate(() => !request.isCompleted);
-                Utility.Logger.Warning("wait request end {0}", entryName);
+                Utility.SLogger.Warning("wait request begin {0}", entryName);
+                ContentSystem.Scheduler.WaitUntilCompleted(() => request.isCompleted);
+                Utility.SLogger.Warning("wait request end {0}", entryName);
             }
             else
             {
-                Utility.Logger.Warning("failed to wait request {0}", entryName);
+                Utility.SLogger.Warning("failed to wait request {0}", entryName);
             }
         }
 
@@ -271,14 +270,14 @@ namespace Iris.ContentManagement.Internal
                         }
                         catch (Exception exception)
                         {
-                            Utility.Logger.Exception(exception, "callback error");
+                            Utility.SLogger.Exception(exception, "callback error");
                         }
                         e.Remove();
                     }
                 }
                 catch (Exception exception)
                 {
-                    Utility.Logger.Exception(exception);
+                    Utility.SLogger.Exception(exception);
                 }
             }
 
@@ -292,13 +291,13 @@ namespace Iris.ContentManagement.Internal
                 webRequest.UserAgent = _downloader._uriResolver.GetUserAgent();
                 webRequest.AddRange(range);
 
-                Utility.Logger.Debug("requesting {0} from {1}", _info.name, uriString);
+                Utility.SLogger.Debug("requesting {0} from {1}", _info.name, uriString);
                 var response = await webRequest.GetResponseAsync() as HttpWebResponse;
-                Utility.Logger.Debug("response {0} ({1})", response.StatusCode, (int)response.StatusCode);
+                Utility.SLogger.Debug("response {0} ({1})", response.StatusCode, (int)response.StatusCode);
                 if (acceptRedirect && response.StatusCode == HttpStatusCode.Redirect)
                 {
                     var location = response.GetResponseHeader("location");
-                    Utility.Logger.Warning("redirecting {0} to {1}", _info.name, location);
+                    Utility.SLogger.Warning("redirecting {0} to {1}", _info.name, location);
                     response.Dispose();
                     return await GetResponse(location, range, false);
                 }
@@ -312,7 +311,7 @@ namespace Iris.ContentManagement.Internal
                 if (!writer.CanWrite)
                 {
                     fileSize = 0;
-                    Utility.Logger.Warning("invalid file {0}", _info.ToString());
+                    Utility.SLogger.Warning("invalid file {0}", _info.ToString());
                     return false;
                 }
                 fileSize = writer.Length;
@@ -323,7 +322,7 @@ namespace Iris.ContentManagement.Internal
                 // corrupted if local size is bigger than expected
                 if (fileSize > _info.expectedSize)
                 {
-                    Utility.Logger.Warning("corrupted file {0}", _info.ToString());
+                    Utility.SLogger.Warning("corrupted file {0}", _info.ToString());
                     writer.SetLength(0);
                     fileSize = 0;
                     return true;
@@ -348,7 +347,7 @@ namespace Iris.ContentManagement.Internal
                 }
                 if (_info.expectedSize != 0 && _info.expectedSize != response.ContentLength)
                 {
-                    Utility.Logger.Debug("got invalid content-length from http response {0} {1} expected {2}",
+                    Utility.SLogger.Debug("got invalid content-length from http response {0} {1} expected {2}",
                         _info.ToString(), response.ContentLength, _info.expectedSize);
                     return false;
                 }
@@ -362,7 +361,7 @@ namespace Iris.ContentManagement.Internal
                     //TODO make buffer managed (expose as interface)
                     const int BufferSize = 4096;
                     var buffer = new byte[BufferSize];
-                    Utility.Logger.Debug("getting response stream {0}", _info.name);
+                    Utility.SLogger.Debug("getting response stream {0}", _info.name);
                     await using var responseStream = response.GetResponseStream();
                     if (responseStream == null)
                     {
@@ -370,7 +369,7 @@ namespace Iris.ContentManagement.Internal
                     }
                     responseStream.ReadTimeout = _timeout;
                     var receivedCalc = 0L;
-                    Utility.Logger.Debug("got response stream {0} {1}", _info.name,
+                    Utility.SLogger.Debug("got response stream {0} {1}", _info.name,
                         response.ContentLength);
                     while (!_cancelled && _requestedByteCount < response.ContentLength)
                     {
@@ -399,18 +398,18 @@ namespace Iris.ContentManagement.Internal
                             }
                         }
                     }
-                    Utility.Logger.Debug("finish stream {0}", _info.name);
+                    Utility.SLogger.Debug("finish stream {0}", _info.name);
                 }
                 catch (Exception exception)
                 {
-                    Utility.Logger.Exception(exception);
+                    Utility.SLogger.Exception(exception);
                 }
             }
 
             public async Task SendRequest()
             {
-                Utility.Assert.Debug(!_isDone);
-                Utility.Logger.Debug("run request {0} on thread {1}", _info.ToString(), Thread.CurrentThread.ManagedThreadId);
+                Utility.SAssert.Debug(!_isDone);
+                Utility.SLogger.Debug("run request {0} on thread {1}", _info.ToString(), Thread.CurrentThread.ManagedThreadId);
                 var writer = _storage.OpenWrite(_info.name);
                 try
                 {
@@ -426,22 +425,22 @@ namespace Iris.ContentManagement.Internal
                     }
                     _statusCode = response.StatusCode;
                     await WriteResponse(response, writer);
-                    Utility.Logger.Debug("ending: {0}", _info.name);
+                    Utility.SLogger.Debug("ending: {0}", _info.name);
                 }
                 catch (Exception exception)
                 {
                     if (exception is WebException webException && webException.Response is HttpWebResponse response)
                     {
                         _statusCode = response.StatusCode;
-                        Utility.Logger.Warning("WebException Status {0} {1}", _info.name, webException.Status);
+                        Utility.SLogger.Warning("WebException Status {0} {1}", _info.name, webException.Status);
                     }
-                    Utility.Logger.Exception(exception, "failed to download {0}", _info.name, _statusCode);
+                    Utility.SLogger.Exception(exception, "failed to download {0}", _info.name, _statusCode);
                 }
                 finally
                 {
                     _isDone = true;
                     _rawRequest = null;
-                    Utility.Logger.Debug("request completed: {0}", _info.name);
+                    Utility.SLogger.Debug("request completed: {0}", _info.name);
                     writer.Close();
                     _downloader.OnRequestCompletedThreading(this);
                 }

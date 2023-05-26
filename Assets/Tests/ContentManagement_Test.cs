@@ -8,9 +8,9 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Iris.ContentManagement;
 using Iris.ContentManagement.Internal;
+using Iris.ContentManagement.Cache;
+using Iris.ContentManagement.Utility;
 using System.Runtime.ExceptionServices;
-
-using Checksum = Iris.ContentManagement.Utility.Checksum;
 
 public class ContentManagement_Test
 {
@@ -116,7 +116,7 @@ public class ContentManagement_Test
     public IEnumerator Test_Download()
     {
         ContentSystem.Startup();
-        
+
         var storage = new LocalStorage(new OSFileSystem("LocalStorage"));
         var digest = new ContentDigest(33270, 13661);
         var downloader = new Downloader(new TestUriResolver());

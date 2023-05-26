@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Cache
 {
     public interface IFileCache
     {
@@ -28,7 +28,7 @@ namespace Iris.ContentManagement.Internal
                 }
                 catch (Exception exception)
                 {
-                    Utility.Logger.Exception(exception,
+                    Utility.SLogger.Exception(exception,
                         "can't read: {0} #{1} {2}", nameof(FileCacheCollection), i, filePath);
                 }
             }

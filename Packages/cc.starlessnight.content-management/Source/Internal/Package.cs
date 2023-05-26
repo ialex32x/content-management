@@ -49,7 +49,7 @@ namespace Iris.ContentManagement.Internal
         internal object LoadAssetSync(string assetName)
         {
             LoadSync();
-            Utility.Assert.Debug(_state == EPackageState.Loaded);
+            Utility.SAssert.Debug(_state == EPackageState.Loaded);
             return _packageHandle.LoadAsset(assetName);
         }
 
@@ -127,7 +127,7 @@ namespace Iris.ContentManagement.Internal
                     }
                 default:
                     {
-                        Utility.Assert.Never("should not happen");
+                        Utility.SAssert.Never("should not happen");
                         index = SIndex.None;
                         return;
                     }
@@ -137,9 +137,9 @@ namespace Iris.ContentManagement.Internal
 
         internal void AddDependency(UPackage package)
         {
-            Utility.Assert.Debug(package != null, "add dependency with null package");
-            Utility.Assert.Debug(_state == EPackageState.Created, "call AddDependency only on init");
-            Utility.Assert.Debug(!_dependencies.Contains(package) && package != this);
+            Utility.SAssert.Debug(package != null, "add dependency with null package");
+            Utility.SAssert.Debug(_state == EPackageState.Created, "call AddDependency only on init");
+            Utility.SAssert.Debug(!_dependencies.Contains(package) && package != this);
             _dependencies.Add(package);
         }
 
@@ -155,7 +155,7 @@ namespace Iris.ContentManagement.Internal
         {
             if (handle == _packageHandle)
             {
-                Utility.Logger.Debug("{0} loaded {1}", nameof(UPackage), _packageHandle.name);
+                Utility.SLogger.Debug("{0} loaded {1}", nameof(UPackage), _packageHandle.name);
             }
             CheckDependenciesState();
         }
@@ -186,7 +186,7 @@ namespace Iris.ContentManagement.Internal
 
         private void OnLoaded()
         {
-            Utility.Logger.Debug("{0} fully loaded {1}", nameof(UPackage), _packageHandle.name);
+            Utility.SLogger.Debug("{0} fully loaded {1}", nameof(UPackage), _packageHandle.name);
             while (_packageRequestHandlers.TryRemoveAt(0, out var handler))
             {
                 handler.OnPackageLoaded(_packageHandle);
