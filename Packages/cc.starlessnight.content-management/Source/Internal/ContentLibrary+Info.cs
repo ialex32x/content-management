@@ -25,6 +25,8 @@ namespace Iris.ContentManagement.Internal
 
             public readonly ContentDigest digest => _db.GetPackageState(_index).digest;
 
+            public readonly PackageInfo[] dependencies => GetDependencies();
+
             public readonly EntryInfo[] entries
             {
                 get
@@ -36,6 +38,40 @@ namespace Iris.ContentManagement.Internal
             }
 
             public PackageInfo(ContentLibrary db, SIndex index) => (this._db, this._index) = (db, index);
+
+            public PackageInfo[] GetDependencies()
+            {
+#if IRIS_DIRECT_DEPS_ONLY
+                var openSet = new List<PackageInfo>();
+                var closeSet = new HashSet<PackageInfo>();
+
+                openSet.Add(this);
+                while (openSet.Count != 0)
+                {
+                    var first = openSet[openSet.Count - 1];
+                    openSet.RemoveAt(openSet.Count - 1);
+                    closeSet.Add(first);
+
+                    var dependencies = _db.GetPackageDependencies(first);
+                    for (int i = 0, size = dependencies.Length; i < size; i++)
+                    {
+                        var item = dependencies[i];
+                        if (!closeSet.Contains(item))
+                        {
+                            openSet.Add(item);
+                            closeSet.Add(item);
+                        }
+                    }
+                }
+                closeSet.Remove(this);
+
+                var results = new PackageInfo[closeSet.Count];
+                closeSet.CopyTo(results, 0);
+                return results;
+#else
+                return _db.GetPackageDependencies(this);
+#endif
+            }
 
             // 迭代包中的所有文件
             public void EnumerateEntries(Action<EntryInfo> fn)

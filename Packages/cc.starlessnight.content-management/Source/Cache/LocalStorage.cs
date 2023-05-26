@@ -32,6 +32,10 @@ namespace Iris.ContentManagement.Cache
         /// </summary>
         public long totalSize => GetFastTotalSize();
 
+        public LocalStorage() : this(new Utility.OSFileSystem("LocalStorage"))
+        {
+        }
+
         public LocalStorage(IFileSystem fileSystem, string extension = ".pak")
         {
             _fileSystem = fileSystem;
@@ -187,7 +191,12 @@ namespace Iris.ContentManagement.Cache
             try
             {
                 _lock.EnterReadLock();
-                return _files.TryGetValue(index, out var file) && file.IsValidStream(stream);
+                if (!_files.IsValidIndex(index))
+                {
+                    return false;
+                }
+                ref var file = ref _files.UnsafeGetValueByRef(index);
+                return file.IsValidStream(stream);
             }
             finally
             {
@@ -245,10 +254,11 @@ namespace Iris.ContentManagement.Cache
             try
             {
                 _lock.EnterWriteLock();
-                if (!_mappings.TryGetValue(entryName, out var index) || !_files.TryGetValue(index, out var file))
+                if (!_mappings.TryGetValue(entryName, out var index) || !_files.IsValidIndex(index))
                 {
                     return false;
                 }
+                ref var file = ref _files.UnsafeGetValueByRef(index);
                 if (file.isWriting)
                 {
                     Utility.SLogger.Error("can not delete file which is writing {0}", file.fileName);
@@ -280,10 +290,11 @@ namespace Iris.ContentManagement.Cache
             try
             {
                 _lock.EnterReadLock();
-                if (!_mappings.TryGetValue(entryName, out var index) || !_files.TryGetValue(index, out var file))
+                if (!_mappings.TryGetValue(entryName, out var index) || !_files.IsValidIndex(index))
                 {
                     return false;
                 }
+                ref var file = ref _files.UnsafeGetValueByRef(index);
                 if (check && file.digest != digest)
                 {
                     Utility.SLogger.Error("can not read corrupted file {0} {1} != {2}", file.fileName, file.digest, digest);
@@ -309,12 +320,13 @@ namespace Iris.ContentManagement.Cache
             try
             {
                 _lock.EnterReadLock();
-                if (_mappings.TryGetValue(name, out var index) && _files.TryGetValue(index, out var file))
+                if (!_mappings.TryGetValue(name, out var index) || !_files.IsValidIndex(index))
                 {
-                    // Utility.Logger.Info("check {0} {1} ?? {2}", file.fileName, file.digest, digest);
-                    return !file.isWriting && file.digest == digest;
+                    return false;
                 }
-                return false;
+                ref var file = ref _files.UnsafeGetValueByRef(index);
+                // Utility.Logger.Info("check {0} {1} ?? {2}", file.fileName, file.digest, digest);
+                return !file.isWriting && file.digest == digest;
             }
             finally
             {
@@ -345,10 +357,11 @@ namespace Iris.ContentManagement.Cache
             try
             {
                 _lock.EnterWriteLock();
-                if (!_mappings.TryGetValue(entryName, out var index) || !_files.TryGetValue(index, out var file))
+                if (!_mappings.TryGetValue(entryName, out var index) || !_files.IsValidIndex(index))
                 {
                     return default;
                 }
+                ref var file = ref _files.UnsafeGetValueByRef(index);
                 if (check && file.digest != digest)
                 {
                     Utility.SLogger.Error("can not read corrupted file {0} {1} != {2}", file.fileName, file.digest, digest);
@@ -366,6 +379,25 @@ namespace Iris.ContentManagement.Cache
                     return default;
                 }
                 return new ReaderStream(this, index, stream);
+            }
+            finally
+            {
+                _lock.ExitWriteLock();
+            }
+        }
+
+        internal void CloseAnyway(string entryName)
+        {
+            try
+            {
+                _lock.EnterWriteLock();
+                if (!_mappings.TryGetValue(entryName, out var index) || !_files.IsValidIndex(index))
+                {
+                    return;
+                }
+                ref var file = ref _files.UnsafeGetValueByRef(index);
+                file.CloseAnyway();
+                Utility.SLogger.Debug("close file anyway {0}", file.fileName);
             }
             finally
             {

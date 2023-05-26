@@ -120,11 +120,14 @@ namespace Iris.ContentManagement.Internal
                 var stream = _manager._fileCache.OpenRead(this.name, this.digest);
                 if (stream == null)
                 {
-                    if (shouldDownloadMissing && _manager._downloader != null)
+                    if (shouldDownloadMissing)
                     {
-                        this._webRequest = _manager._downloader.Enqueue(_manager._storage, this.name, this.digest.size);
-                        this._webRequest.Bind(OnWebRequestCompleted());
-                        return;
+                        this._webRequest = _manager.EnqueueWebRequest(this.name, this.digest.size);
+                        if (this._webRequest.isValid)
+                        {
+                            this._webRequest.Bind(OnWebRequestCompleted());
+                            return;
+                        }
                     }
                 }
                 else

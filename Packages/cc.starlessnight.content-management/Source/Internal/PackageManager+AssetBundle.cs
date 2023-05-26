@@ -3,7 +3,6 @@ using System.IO;
 
 namespace Iris.ContentManagement.Internal
 {
-    using Cache;
     using Iris.ContentManagement.Utility;
     using UnityEngine;
 
@@ -165,11 +164,14 @@ namespace Iris.ContentManagement.Internal
                     return;
                 }
 
-                if (shouldDownloadMissing && _manager._downloader != null)
+                if (shouldDownloadMissing)
                 {
-                    this._webRequest = _manager._downloader.Enqueue(_manager._storage, this.name, this.digest.size);
-                    this._webRequest.Bind(OnWebRequestCompleted());
-                    return;
+                    this._webRequest = _manager.EnqueueWebRequest(this.name, this.digest.size);
+                    if (this._webRequest.isValid)
+                    {
+                        this._webRequest.Bind(OnWebRequestCompleted());
+                        return;
+                    }
                 }
 
                 // 下载完成后仍然无法载入, 视为无效

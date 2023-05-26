@@ -42,7 +42,7 @@ public class ContentManagement_Test
     public void Test_ContentLibrary()
     {
         const string ContentLibraryName = "contentlibrary.dat";
-        var storage = new LocalStorage(new OSFileSystem("LocalStorage"));
+        var storage = new LocalStorage();
 
         {
             Assert.AreEqual(new Checksum(15).ToString(), "000F");
@@ -117,7 +117,7 @@ public class ContentManagement_Test
     {
         ContentSystem.Startup();
 
-        var storage = new LocalStorage(new OSFileSystem("LocalStorage"));
+        var storage = new LocalStorage();
         var digest = new ContentDigest(33270, 13661);
         var downloader = new Downloader(new TestUriResolver());
 

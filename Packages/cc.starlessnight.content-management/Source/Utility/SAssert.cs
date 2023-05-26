@@ -23,7 +23,7 @@ namespace Iris.ContentManagement.Utility
 #if CONTENTMANAGEMENT_DEBUG
             SLogger.Fatal(text);
 #else 
-            Logger.Error(text);
+            SLogger.Error(text);
 #endif
         }
 
@@ -50,7 +50,7 @@ namespace Iris.ContentManagement.Utility
 #if CONTENTMANAGEMENT_DEBUG
             SLogger.Fatal(text);
 #else 
-            Logger.Error(text);
+            SLogger.Error(text);
 #endif
         }
 

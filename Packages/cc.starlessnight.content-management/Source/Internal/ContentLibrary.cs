@@ -136,17 +136,23 @@ namespace Iris.ContentManagement.Internal
 
         public DirectoryInfo RootDirectory => new(this, GetDirectoryIndex(string.Empty));
 
-        public string[] GetPackageDependencies(string packageName)
+        public PackageInfo[] GetPackageDependencies(PackageInfo packageInfo)
         {
-            if (_cachedPackageMap.TryGetValue(packageName, out var packageIndex))
+            if (_cachedPackageMap.TryGetValue(packageInfo.name, out var packageIndex))
             {
-                if (_packages.TryGetValue(packageIndex, out var state))
+                if (_packages.TryGetValue(packageIndex, out var state) && state.dependencies != null)
                 {
-                    return state.dependencies;
+                    var n = state.dependencies.Length;
+                    var infos = new PackageInfo[n];
+                    for (var i = 0; i < n; ++i)
+                    {
+                        infos[i] = GetPackage(state.dependencies[i]);
+                    }
+                    return infos;
                 }
             }
 
-            return default;
+            return new PackageInfo[0];
         }
 
         protected string GetPackageName(in SIndex packageIndex) => _packages.TryGetValue(packageIndex, out var state) ? state.name : default;

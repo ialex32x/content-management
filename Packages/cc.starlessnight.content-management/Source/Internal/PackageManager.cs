@@ -52,10 +52,7 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        private void ReleaseSlot(in SIndex referenceIndex)
-        {
-            _packages.RemoveAt(referenceIndex);
-        }
+        private void ReleaseSlot(in SIndex referenceIndex) => _packages.RemoveAt(referenceIndex);
 
         private string GetReferenceName(in SIndex referenceIndex) => _packages.TryGetValue(referenceIndex, out var slot) ? slot.name : default;
 
@@ -67,6 +64,15 @@ namespace Iris.ContentManagement.Internal
             {
                 throw new ObjectDisposedException(contextObject, "manager is released");
             }
+        }
+
+        private WebRequestHandle EnqueueWebRequest(string name, uint size)
+        {
+            if (_downloader == null)
+            {
+                return default;
+            }
+            return _downloader.Enqueue(_storage, name, size);
         }
 
         private void WaitUntilCompleted(IPackageSlot slot)

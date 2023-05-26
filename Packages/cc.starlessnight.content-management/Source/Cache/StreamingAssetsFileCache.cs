@@ -32,6 +32,15 @@ namespace Iris.ContentManagement.Cache
             }
             return File.OpenRead(path);
         }
+
+        public static StreamingAssetsFileCache Create()
+        {
+#if UNITY_ANDROID
+            return new AndroidStreamingAssetsFileCache();
+#else
+            return new StreamingAssetsFileCache();
+#endif
+        }
     }
 
     public class AndroidStreamingAssetsFileCache : StreamingAssetsFileCache
