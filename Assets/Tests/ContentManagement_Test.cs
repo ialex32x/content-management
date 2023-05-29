@@ -115,39 +115,42 @@ public class ContentManagement_Test
     [UnityTest]
     public IEnumerator Test_Download()
     {
-        ContentSystem.Startup();
+        ContentSystem.Startup(new()
+        {
+            useDownloader = true, 
+            uriResolver = new TestUriResolver(), 
+        });
 
         var storage = new LocalStorage();
         var digest = new ContentDigest(33270, 13661);
-        var downloader = new Downloader(new TestUriResolver());
 
         // storage.DeleteFile("test1");
-        if (!storage.VerifyFile("test1", digest)) downloader.Enqueue(storage, "test1", digest.size);
-        if (!storage.VerifyFile("test2", digest)) downloader.Enqueue(storage, "test2", digest.size);
-        if (!storage.VerifyFile("test3", digest)) downloader.Enqueue(storage, "test3", digest.size);
-        if (!storage.VerifyFile("test4", digest)) downloader.Enqueue(storage, "test4", digest.size);
-        if (!storage.VerifyFile("test5", digest)) downloader.Enqueue(storage, "test5", digest.size);
+        if (!storage.VerifyFile("test1", digest)) ContentSystem.Downloader.Enqueue(storage, "test1", digest.size);
+        if (!storage.VerifyFile("test2", digest)) ContentSystem.Downloader.Enqueue(storage, "test2", digest.size);
+        if (!storage.VerifyFile("test3", digest)) ContentSystem.Downloader.Enqueue(storage, "test3", digest.size);
+        if (!storage.VerifyFile("test4", digest)) ContentSystem.Downloader.Enqueue(storage, "test4", digest.size);
+        if (!storage.VerifyFile("test5", digest)) ContentSystem.Downloader.Enqueue(storage, "test5", digest.size);
 
         // 测试 302, 404 的处理逻辑
-        downloader.Enqueue(storage, "notfound").Bind(result
+        ContentSystem.Downloader.Enqueue(storage, "notfound").Bind(result
             => Debug.LogFormat("download result {0} {1} {2}", result.isValid, result.info, result.statusCode));
-        downloader.Enqueue(storage, "randompic").Bind(result
+        ContentSystem.Downloader.Enqueue(storage, "randompic").Bind(result
             => Debug.LogFormat("download result {0} {1} {2}", result.isValid, result.info, result.statusCode));
         
         Debug.LogFormat("unity main thread {0}", System.Threading.Thread.CurrentThread.ManagedThreadId);
 
         // 模拟异步等待
-        while (!downloader.isCompleted)
+        while (!ContentSystem.Downloader.isCompleted)
         {
             yield return null;
         }
 
         // 模拟同步等待
-        // downloader.WaitUntilAllCompleted();
+        // ContentSystem.Downloader.WaitUntilAllCompleted();
 
         try
         {
-            Assert.IsTrue(downloader.isCompleted);
+            Assert.IsTrue(ContentSystem.Downloader.isCompleted);
             Assert.IsTrue(storage.IsFileValid("test1", digest));
             Assert.IsTrue(storage.IsFileValid("test2", digest));
             Assert.IsTrue(storage.IsFileValid("test3", digest));

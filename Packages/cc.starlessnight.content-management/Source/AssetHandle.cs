@@ -32,10 +32,9 @@ namespace Iris.ContentManagement
     {
         private IAsset _asset;
 
-        public AssetHandle(IAsset asset)
-        {
-            _asset = asset;
-        }
+        public bool isCompleted => _asset == null || _asset.isCompleted;
+
+        public AssetHandle(IAsset asset) => _asset = asset;
 
         public T Load<T>() where T : class => (T)_asset?.Get();
 
@@ -49,10 +48,7 @@ namespace Iris.ContentManagement
 
         public AsyncInstantiateInstruction<UnityEngine.GameObject> InstantiateAsync() => new AsyncInstantiateInstruction<UnityEngine.GameObject>(_asset);
 
-        public void Invalidate()
-        {
-            _asset = null;
-        }
+        public void Invalidate() => _asset = null;
 
         public override string ToString() => _asset != null ? _asset.ToString() : "None";
 

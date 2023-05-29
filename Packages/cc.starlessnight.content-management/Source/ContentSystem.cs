@@ -7,36 +7,43 @@ namespace Iris.ContentManagement
         private static ContentSystem _system;
         private IContentManager _contentManager;
         private IScheduler _scheduler;
-        private Internal.PackageManager _packageManager;
         private Cache.LocalStorage _storage;
+        private Internal.IWebRequestQueue _downloader;
 
         public static IScheduler Scheduler => _system._scheduler;
 
-        internal static Internal.PackageManager PackageManager => _system._packageManager;
+        public static Internal.IWebRequestQueue Downloader => _system._downloader;
 
-        private ContentSystem()
+        private ContentSystem(in StartupOptions options)
         {
-            _scheduler = new Utility.DefaultScheduler();
-            _contentManager = new Internal.EdSimulatedContentManager();
+            //TODO content library 的更新逻辑
+            var library = new Internal.ContentLibrary();
 
-            _storage = new Cache.LocalStorage();
-            var streamingAssets = Cache.StreamingAssetsFileCache.Create();
-            var cache = new Cache.FileCacheCollection(streamingAssets, _storage);
-            // var library = new Internal.ContentLibrary();
-            // library.Import(_storage.OpenRead("contentlibrary.dat"));
-            // var resolver = new 
-            // var downloader = new Internal.Downloader(resolver);
-            // _packageManager = new Internal.PackageManager(cache, _storage, null);
-            // _contentManager = new Internal.DownloadableContentManager(library, _packageManager);
+            _scheduler = new Utility.DefaultScheduler();
+
+            var cache = new Cache.FileCacheCollection();
+            _storage = cache.Add<Cache.LocalStorage>();
+            // 启用 StreamingAssets
+            if (options.useStreamingAssets)
+            {
+                cache.Add<Cache.StreamingAssetsFileCache>();
+            }
+            if (options.useDownloader)
+            {
+                Utility.SAssert.Debug(options.uriResolver != null);
+                _downloader = new Internal.Downloader(options.uriResolver);
+            }
+            var packageManager = new Internal.PackageManager(cache, _storage, _downloader);
+            _contentManager = new Internal.DownloadableContentManager(library, packageManager);
         }
 
-        public static void Startup()
+        public static void Startup(in StartupOptions options)
         {
             if (_system != null)
             {
                 return;
             }
-            _system = new ContentSystem();
+            _system = new ContentSystem(options);
         }
 
         public static void Shutdown()
@@ -46,7 +53,6 @@ namespace Iris.ContentManagement
                 return;
             }
             _system._contentManager.Shutdown();
-            // _system._packageManager.Shutdown();
             _system._storage.Shutdown();
             _system._scheduler.Shutdown();
             _system = null;

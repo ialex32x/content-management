@@ -5,6 +5,8 @@ namespace Iris.ContentManagement.Internal
 
     public interface IWebRequestQueue
     {
+        bool isCompleted { get; }
+        
         void WaitUntilAllCompleted();
         void WaitUntilCompleted(string entryName);
 

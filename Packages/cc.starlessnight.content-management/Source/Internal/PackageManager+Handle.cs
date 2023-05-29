@@ -17,7 +17,7 @@ namespace Iris.ContentManagement.Internal
 
             public PackageHandle(PackageManager manager, Utility.SIndex index) => (this._manager, this._index) = (manager, index);
 
-            internal void Bind(IPackageRequestHandler callback) => _manager.Bind(_index, callback);
+            internal void Bind(IManagedPackageRequestHandler callback) => _manager.Bind(_index, callback);
 
             internal void LoadSync() => _manager.LoadPackageSync(_index);
 

@@ -1,4 +1,4 @@
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
     public interface IUriResolver
     {

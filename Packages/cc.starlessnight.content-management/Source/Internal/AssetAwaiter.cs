@@ -3,38 +3,30 @@ using System.Runtime.CompilerServices;
 
 namespace Iris.ContentManagement.Internal
 {
-    internal class AssetRequest : IAssetRequestHandler
+    public class AssetAwaiterRequest : IRequestHandler
     {
         public IAsset asset;
         public Exception exception;
         public Action continuation;
 
-        public void OnRequestCompleted()
-        {
-            continuation?.Invoke();
-        }
+        public void OnRequestCompleted() => continuation?.Invoke();
     }
 
     public struct AssetLoadAwaiter<T> : ICriticalNotifyCompletion
     where T : class
     {
-        private AssetRequest _request;
+        private AssetAwaiterRequest _request;
 
         public bool IsCompleted => _request.asset.isCompleted;
 
         public AssetLoadAwaiter(IAsset asset)
         {
-            _request = new AssetRequest();
+            _request = new();
             _request.asset = asset;
 
             if (!this.IsCompleted)
             {
                 var index = Utility.SIndex.None;
-                //TODO 使用不同的接口处理 stream/asset, 在哪一层区分 Zip File Stream 和 Unity Asset ?
-                if (typeof(T).IsSubclassOf(typeof(System.IO.Stream)))
-                {
-                    
-                }
                 _request.asset.RequestAsyncLoad(ref index, _request);
             }
         }
@@ -64,13 +56,13 @@ namespace Iris.ContentManagement.Internal
     public struct AssetInstantiateAwaiter<T> : ICriticalNotifyCompletion
     where T : UnityEngine.Object
     {
-        private AssetRequest _request;
+        private AssetAwaiterRequest _request;
 
         public bool IsCompleted => _request.asset.isCompleted;
 
         public AssetInstantiateAwaiter(IAsset asset)
         {
-            _request = new AssetRequest();
+            _request = new();
             _request.asset = asset;
 
             if (!this.IsCompleted)

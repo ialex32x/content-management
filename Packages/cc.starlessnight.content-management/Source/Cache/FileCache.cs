@@ -18,6 +18,13 @@ namespace Iris.ContentManagement.Cache
             _caches.AddRange(caches);
         }
 
+        public T Add<T>() where T : IFileCache, new()
+        {
+            var t = new T();
+            _caches.Add(t);
+            return t;
+        }
+
         public Stream OpenRead(string filePath, in ContentDigest digest)
         {
             for (int i = 0, n = _caches.Count; i < n; ++i)

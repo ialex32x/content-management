@@ -1,16 +1,17 @@
 namespace Iris.ContentManagement.Internal
 {
-    internal interface IPackageAssetRequestHandler
-    {
-        void OnRequestCompleted(object target);
-    }
-
-    public interface IAssetRequestHandler
+    // 通用请求回调
+    public interface IRequestHandler
     {
         void OnRequestCompleted();
     }
 
-    internal interface IPackageRequestHandler
+    internal interface IManagedAssetRequestHandler
+    {
+        void OnRequestCompleted(object target);
+    }
+
+    internal interface IManagedPackageRequestHandler
     {
         void OnPackageLoaded(in PackageManager.PackageHandle handle);
 

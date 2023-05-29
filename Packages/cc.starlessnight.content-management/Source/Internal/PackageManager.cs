@@ -82,7 +82,7 @@ namespace Iris.ContentManagement.Internal
             Utility.SLogger.Debug("finish pending package {0}", slot.name);
         }
 
-        private void Bind(in SIndex referenceIndex, IPackageRequestHandler callback)
+        private void Bind(in SIndex referenceIndex, IManagedPackageRequestHandler callback)
         {
             if (!_packages.TryGetValue(referenceIndex, out var slot))
             {
@@ -138,15 +138,15 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        // private Stream OpenRead(in SIndex referenceIndex, string assetName)
-        // {
-        //     VerifyState(assetName);
-        //     if (_packages.TryGetValue(referenceIndex, out var slot))
-        //     {
-        //         return slot.OpenRead(assetName);
-        //     }
-        //     return default;
-        // }
+        private System.IO.Stream LoadStream(in SIndex referenceIndex, string assetName)
+        {
+            VerifyState(assetName);
+            if (_packages.TryGetValue(referenceIndex, out var slot))
+            {
+                return slot.LoadStream(assetName);
+            }
+            return default;
+        }
 
         private object LoadAsset(in SIndex referenceIndex, string assetName)
         {

@@ -320,6 +320,8 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
+        public static implicit operator bool(ContentLibrary lib) => lib != null;
+
 #if UNITY_EDITOR
         public void SetPackageDigest(in PackageInfo packageInfo, in ContentDigest digest)
         {

@@ -47,7 +47,7 @@ namespace Iris.ContentManagement.Internal
             }
 
             #region Asset Access - (only valid on loaded package)
-            // public Stream OpenRead(string assetName) => throw new NotSupportedException();
+            public Stream LoadStream(string assetName) => throw new NotSupportedException();
 
             public object LoadAsset(string assetName)
             {
@@ -61,6 +61,7 @@ namespace Iris.ContentManagement.Internal
                 var request = this._assetBundle != null ? this._assetBundle.LoadAssetAsync(assetName) : default;
                 if (request == null)
                 {
+                    //TODO make the callback async even if invalid
                     OnAssetLoaded(payload, null);
                     return;
                 }

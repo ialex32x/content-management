@@ -13,11 +13,13 @@ namespace Iris.ContentManagement.Internal
 
             bool isCompleted { get; }
 
-            void Bind(IPackageRequestHandler handler);
+            void Bind(IManagedPackageRequestHandler handler);
             void Unbind();
 
             void Load();
             void Unload();
+
+            System.IO.Stream LoadStream(string assetName);
 
             object LoadAsset(string assetName);
 
@@ -27,8 +29,9 @@ namespace Iris.ContentManagement.Internal
         private class PackageSlotBase
         {
             protected readonly PackageManager _manager;
+            // this reference index for fastpath
             protected readonly SIndex _index;
-            protected WeakReference<IPackageRequestHandler> _handler = new(null);
+            protected WeakReference<IManagedPackageRequestHandler> _handler = new(null);
 
             protected readonly string _name;
             protected readonly ContentDigest _digest;
@@ -44,7 +47,7 @@ namespace Iris.ContentManagement.Internal
                 this._digest = digest;
             }
 
-            public void Bind(IPackageRequestHandler handler)
+            public void Bind(IManagedPackageRequestHandler handler)
             {
                 _handler.SetTarget(handler);
             }

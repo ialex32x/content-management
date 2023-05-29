@@ -264,19 +264,19 @@ namespace Iris.ContentManagement.Internal
             private readonly ContentLibrary _db;
             private readonly SIndex _index;
 
-            public readonly bool isValid => _db.IsValidEntry(_index);
+            public readonly bool isValid => _db && _db.IsValidEntry(_index);
 
             // file name with extension
-            public readonly string name => _db._entries.TryGetValue(_index, out var state) ? state.name : default;
+            public readonly string name => _db && _db._entries.TryGetValue(_index, out var state) ? state.name : default;
 
             // full path
-            public readonly string fullName => _db._entries.TryGetValue(_index, out var state) ? state.entryPath : default;
+            public readonly string fullName => _db && _db._entries.TryGetValue(_index, out var state) ? state.entryPath : default;
 
             public readonly SIndex index => _index;
 
-            public readonly PackageInfo package => new(_db, _db.GetEntryPackageIndex(_index));
+            public readonly PackageInfo package => _db ? new(_db, _db.GetEntryPackageIndex(_index)) : default;
 
-            public readonly DirectoryInfo directory => new(_db, _db.GetEntryDirectoryIndex(_index));
+            public readonly DirectoryInfo directory => _db ? new(_db, _db.GetEntryDirectoryIndex(_index)) : default;
 
             public EntryInfo(ContentLibrary db, SIndex index) => (this._db, this._index) = (db, index);
 
@@ -286,9 +286,9 @@ namespace Iris.ContentManagement.Internal
 
             public override bool Equals(object obj) => obj is EntryInfo other && this == other;
 
-            public override int GetHashCode() => (int)(_db.GetHashCode() ^ _index.GetHashCode());
+            public override int GetHashCode() => _db ? (int)(_db.GetHashCode() ^ _index.GetHashCode()) : _index.GetHashCode();
 
-            public override string ToString() => _db.GetEntryPath(_index);
+            public override string ToString() => _db ? _db.GetEntryPath(_index) : "null";
 
             public static bool operator ==(EntryInfo a, EntryInfo b) => a._db == b._db && a._index == b._index;
 

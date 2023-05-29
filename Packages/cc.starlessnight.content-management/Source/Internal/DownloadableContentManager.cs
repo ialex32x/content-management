@@ -8,7 +8,8 @@ namespace Iris.ContentManagement.Internal
         private ContentLibrary _library;
         private PackageManager _packageManager;
 
-        private Dictionary<string, WeakReference<UPackage>> _cachedPackages = new();
+        private EdSimulatedPackage _defaultPackage;
+        private Dictionary<string, WeakReference<ManagedPackage>> _cachedPackages = new();
         private Dictionary<string, WeakReference<IAsset>> _cachedAssets = new();
 
         public DownloadableContentManager(ContentLibrary library, PackageManager packageManager)
@@ -21,17 +22,28 @@ namespace Iris.ContentManagement.Internal
         {
         }
 
-        private UPackage GetPackage(in ContentLibrary.PackageInfo packageInfo)
+        private EdSimulatedPackage GetDefaultPackage()
+        {
+            if (_defaultPackage == null)
+            {
+                _defaultPackage = new EdSimulatedPackage();
+            }
+            return _defaultPackage;
+        }
+
+        private IPackage GetPackage(in ContentLibrary.EntryInfo entryInfo) => entryInfo.isValid ? GetPackage(entryInfo.package) : GetDefaultPackage();
+
+        private ManagedPackage GetPackage(in ContentLibrary.PackageInfo packageInfo)
         {
             if (!packageInfo.isValid)
             {
-                return UPackage.Null;
+                return ManagedPackage.Null;
             }
             if (_cachedPackages.TryGetValue(packageInfo.name, out var weakReference) && weakReference.TryGetTarget(out var package))
             {
                 return package;
             }
-            package = new UPackage(_packageManager.CreatePackage(packageInfo));
+            package = new ManagedPackage(_packageManager.CreatePackage(packageInfo));
             _cachedPackages.Add(packageInfo.name, new(package));
             foreach (var dependency in packageInfo.dependencies)
             {
@@ -47,12 +59,8 @@ namespace Iris.ContentManagement.Internal
                 return asset;
             }
             var entryInfo = _library.GetEntry(assetPath);
-            if (!entryInfo.isValid)
-            {
-                return EdSimulatedAsset.Null;
-            }
-            var package = GetPackage(entryInfo.package);
-            asset = new PackageAsset(package, assetPath);
+            var package = GetPackage(entryInfo);
+            asset = new ManagedAsset(package, assetPath);
             _cachedAssets[assetPath] = new(asset);
             return asset;
         }

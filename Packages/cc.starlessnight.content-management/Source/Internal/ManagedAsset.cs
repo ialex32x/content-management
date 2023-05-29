@@ -4,7 +4,7 @@ namespace Iris.ContentManagement.Internal
 {
     using Iris.ContentManagement.Utility;
 
-    public sealed class PackageAsset : IAsset, IPackageAssetRequestHandler
+    public sealed class ManagedAsset : IAsset, IManagedAssetRequestHandler
     {
         private enum EAssetState
         {
@@ -17,13 +17,13 @@ namespace Iris.ContentManagement.Internal
         private string _assetPath;
         private EAssetState _state;
         private object _cached;
-        private UPackage _package;
+        private IPackage _package;
         private SIndex _assetRequestHandlerIndex;
-        private SList<IAssetRequestHandler> _handlers = new();
+        private SList<IRequestHandler> _handlers = new();
 
         public bool isCompleted => _state == EAssetState.Loaded || _state == EAssetState.Invalid;
 
-        internal PackageAsset(UPackage package, string assetPath)
+        internal ManagedAsset(IPackage package, string assetPath)
         {
             _assetPath = assetPath;
             _package = package;
@@ -32,6 +32,11 @@ namespace Iris.ContentManagement.Internal
         public object Get()
         {
             RequestSyncLoad();
+            //TODO 暂时硬编码 ZipStream 的处理
+            if (_cached is PackageManager.ManagedStream stream)
+            {
+                return stream.Open(_assetPath);
+            }
             return _cached;
         }
 
@@ -43,7 +48,7 @@ namespace Iris.ContentManagement.Internal
                     return;
                 case EAssetState.Created:
                     _state = EAssetState.Loading;
-                    ((IPackageAssetRequestHandler)this).OnRequestCompleted(_package.LoadAssetSync(_assetPath));
+                    ((IManagedAssetRequestHandler)this).OnRequestCompleted(_package.LoadAssetSync(_assetPath));
                     return;
                 case EAssetState.Loading:
                     {
@@ -62,7 +67,7 @@ namespace Iris.ContentManagement.Internal
             index = SIndex.None;
         }
 
-        public void RequestAsyncLoad(ref SIndex index, IAssetRequestHandler handler)
+        public void RequestAsyncLoad(ref SIndex index, IRequestHandler handler)
         {
             _handlers.RemoveAt(index);
             switch (_state)
@@ -85,7 +90,7 @@ namespace Iris.ContentManagement.Internal
             }
         }
 
-        void IPackageAssetRequestHandler.OnRequestCompleted(object target)
+        void IManagedAssetRequestHandler.OnRequestCompleted(object target)
         {
             if (_state != EAssetState.Loaded)
             {
@@ -100,7 +105,11 @@ namespace Iris.ContentManagement.Internal
 
         public override string ToString()
         {
-            return $"{nameof(PackageAsset)}({_assetPath} {_state})";
+            if (_state == EAssetState.Loaded && _cached == null)
+            {
+                return $"{_assetPath} (FAILED)";
+            }
+            return $"{_assetPath} ({_state})";
         }
     }
 }

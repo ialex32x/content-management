@@ -31,21 +31,26 @@ namespace Iris.ContentManagement.Internal
             {
             }
 
-            public object LoadAsset(string assetName)
+            public System.IO.Stream LoadStream(string assetName)
             {
                 if (_file == null)
                 {
                     return default;
                 }
                 var entry = _file.GetEntry(assetName);
-                //TODO add a stream wrapper to make the stream under the hood reusable after dispose
-                return _file?.GetInputStream(entry);
+                var result = _file.GetInputStream(entry);
+                Utility.SLogger.Debug("load stream {0} => {1}", assetName, result);
+                return result;
             }
+
+            public object LoadAsset(string assetName) => new ManagedStream(_manager, _index);
 
             public void RequestAssetAsync(string assetName, SIndex payload)
             {
+                //TODO make the callback async even if invalid
                 if (_handler.TryGetTarget(out var target))
                 {
+                    Utility.SLogger.Debug("zip asset {0}", assetName);
                     var asset = LoadAsset(assetName);
                     target.OnAssetLoaded(payload, asset);
                 }

@@ -25,6 +25,7 @@ namespace Iris.ContentManagement.Cache
 
         public virtual Stream OpenRead(string filePath, in ContentDigest digest)
         {
+            //TODO return null if digest check failed
             var path = Path.Combine(Application.streamingAssetsPath, filePath);
             if (!File.Exists(path))
             {
