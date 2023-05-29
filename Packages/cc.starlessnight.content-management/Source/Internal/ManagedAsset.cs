@@ -33,9 +33,9 @@ namespace Iris.ContentManagement.Internal
         {
             RequestSyncLoad();
             //TODO 暂时硬编码 ZipStream 的处理
-            if (_cached is PackageManager.ManagedStream stream)
+            if (_cached is IManagedStream mstream)
             {
-                return stream.Open(_assetPath);
+                return mstream.Open(_assetPath);
             }
             return _cached;
         }

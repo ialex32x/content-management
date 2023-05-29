@@ -24,63 +24,63 @@ namespace Iris.ContentManagement.Utility
         public static void Debug(string text)
         {
             try { handler.Debug(text); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Debug(object obj)
         {
             try { handler.Debug(obj.ToString()); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Debug(string fmt, params object[] args)
         {
             try { handler.Debug(fmt, args); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Info(string text)
         {
             try { handler.Info(text); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Info(object obj)
         {
             try { handler.Info(obj.ToString()); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Info(string fmt, params object[] args)
         {
             try { handler.Info(fmt, args); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Warning(string text)
         {
             try { handler.Warning(text); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Warning(object obj)
         {
             try { handler.Warning(obj.ToString()); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
         public static void Warning(string fmt, params object[] args)
         {
             try { handler.Warning(fmt, args); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
@@ -88,7 +88,7 @@ namespace Iris.ContentManagement.Utility
         public static void Error(string text)
         {
             try { handler.Error(text); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
@@ -96,7 +96,7 @@ namespace Iris.ContentManagement.Utility
         public static void Error(object obj)
         {
             try { handler.Error(obj.ToString()); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
@@ -104,7 +104,7 @@ namespace Iris.ContentManagement.Utility
         public static void Error(string fmt, params object[] args)
         {
             try { handler.Error(fmt, args); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
@@ -112,7 +112,7 @@ namespace Iris.ContentManagement.Utility
         public static void Fatal(string text)
         {
             try { handler.Fatal(text); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
@@ -120,7 +120,7 @@ namespace Iris.ContentManagement.Utility
         public static void Fatal(object obj)
         {
             try { handler.Fatal(obj.ToString()); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         [Conditional("CONTENTMANAGEMENT_DEBUG")]
@@ -128,25 +128,25 @@ namespace Iris.ContentManagement.Utility
         public static void Fatal(string fmt, params object[] args)
         {
             try { handler.Fatal(fmt, args); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         public static void Exception(System.Exception exception)
         {
             try { handler.Exception(exception); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         public static void Exception(System.Exception exception, string description)
         {
             try { handler.Exception(exception, description); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         public static void Exception(System.Exception exception, string fmt, params object[] args)
         {
             try { handler.Exception(exception, fmt, args); }
-            catch (System.Exception) { }
+            catch (System.Exception e) { handler.OnInternalError(e); }
         }
 
         private class MinimalLogHandler : ILogHandler
@@ -196,6 +196,12 @@ namespace Iris.ContentManagement.Utility
             public void Exception(Exception exception, string fmt, params object[] args)
             {
                 UnityEngine.Debug.LogErrorFormat("{0} {1} {2}\n{3}", kLogCat, string.Format(fmt, args), exception.Message, exception.StackTrace);
+                UnityEngine.Debug.Break();
+            }
+
+            public void OnInternalError(Exception exception)
+            {
+                UnityEngine.Debug.LogErrorFormat("{0}.InternalError {1} {2}\n{3}", kLogCat, exception.Message, exception.StackTrace);
                 UnityEngine.Debug.Break();
             }
         }

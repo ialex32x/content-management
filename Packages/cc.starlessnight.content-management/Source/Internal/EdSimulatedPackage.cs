@@ -6,6 +6,13 @@ namespace Iris.ContentManagement.Internal
 
     internal class EdSimulatedPackage : IPackage
     {
+        internal class ManagedStream : IManagedStream
+        {
+            public System.IO.Stream Open(string assetPath) => System.IO.File.OpenRead(assetPath);
+
+            public override string ToString() => $"SimulatedStream";
+        }
+
         private SList<bool> _requests = new();
 
         //TODO make it configurable 
@@ -21,16 +28,16 @@ namespace Iris.ContentManagement.Internal
 #if UNITY_EDITOR
             if (IsUnityObject(assetPath))
             {
-                Utility.SLogger.Debug("SIMULATED read as asset {1}", assetPath);
+                Utility.SLogger.Debug("SIMULATED read as asset {0}", assetPath);
                 return UnityEditor.AssetDatabase.LoadMainAssetAtPath(assetPath);
             }
 #endif
             if (System.IO.File.Exists(assetPath))
             {
-                Utility.SLogger.Debug("SIMULATED read as file stream {1}", assetPath);
-                return System.IO.File.OpenRead(assetPath);
+                Utility.SLogger.Debug("SIMULATED read as file stream {0}", assetPath);
+                return new ManagedStream();
             }
-            Utility.SLogger.Debug("SIMULATED read nonexistent object {1}", assetPath);
+            Utility.SLogger.Debug("SIMULATED read nonexistent object {0}", assetPath);
             return null;
         }
 

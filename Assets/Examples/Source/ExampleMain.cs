@@ -37,7 +37,6 @@ public class ExampleMain : MonoBehaviour
 
         //CASE 访问无效资源
         var nonexistence = ContentSystem.GetAsset("Assets/nonexistence.asset");
-        Debug.LogErrorFormat("access nonexistent asset: {0}", nonexistence);
         var nonexistence_value = await nonexistence.LoadAsync();
         if (nonexistence_value == null)
         {

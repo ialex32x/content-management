@@ -15,5 +15,6 @@ namespace Iris.ContentManagement.Utility
         void Exception(System.Exception exception);
         void Exception(System.Exception exception, string description);
         void Exception(System.Exception exception, string fmt, params object[] args);
+        void OnInternalError(System.Exception exception);
     }
 }
