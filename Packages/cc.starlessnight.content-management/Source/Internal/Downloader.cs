@@ -25,6 +25,7 @@ namespace Iris.ContentManagement.Internal
 
         public Downloader(IUriResolver uriResolver)
         {
+            Utility.SAssert.Debug(uriResolver != null);
             _uriResolver = uriResolver;
             _mainThreadId = Thread.CurrentThread.ManagedThreadId;
         }

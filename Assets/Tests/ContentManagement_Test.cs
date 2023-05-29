@@ -41,7 +41,6 @@ public class ContentManagement_Test
     [Test]
     public void Test_ContentLibrary()
     {
-        const string ContentLibraryName = "contentlibrary.dat";
         var storage = new LocalStorage();
 
         {
@@ -51,7 +50,7 @@ public class ContentManagement_Test
             Assert.AreEqual((int)Checksum.Parse(new Checksum(26511).ToString()), 26511);
         }
 
-        if (!storage.Exists(ContentLibraryName))
+        if (!storage.Exists(ContentLibrary.kFileName))
         {
             var db = new ContentLibrary();
             var defaultPackage = db.AddPackage("DefaultPackage", EPackageType.AssetBundle, new ContentDigest());
@@ -68,12 +67,12 @@ public class ContentManagement_Test
             db.AddEntry(defaultPackage, "rootfile2.txt");
             db.AddEntry(defaultPackage, "rootfile3.txt");
 
-            using var writer = storage.OpenWrite(ContentLibraryName);
+            using var writer = storage.OpenWrite(ContentLibrary.kFileName);
             db.Export(writer);
         }
         {
             var db = new ContentLibrary();
-            using var os = storage.OpenRead(ContentLibraryName);
+            using var os = storage.OpenRead(ContentLibrary.kFileName);
             db.Import(os);
 
             Assert.IsTrue(db.FindEntry("asset1.txt").isValid);

@@ -50,7 +50,7 @@ namespace Iris.ContentManagement.Editor
 
             Directory.CreateDirectory(outPath);
             var lib = new Internal.ContentLibrary();
-            using var libStream = File.OpenRead(Path.Combine(inPath, "contentlibrary.dat"));
+            using var libStream = File.OpenRead(Path.Combine(inPath, Internal.ContentLibrary.kFileName));
             var tasks = new List<Task>(lib.PackageCount);
             lib.Import(libStream);
             lib.EnumeratePackages(packInfo => tasks.Add(Task.Run(() => EncryptStream(inPath, outPath, packInfo, passphrase))));
@@ -60,7 +60,7 @@ namespace Iris.ContentManagement.Editor
             var libTasks = new List<Task<ContentDigest>>(lib.PackageCount);
             lib.EnumeratePackages(packInfo => libTasks.Add(Task.Run(() => UpdatePackageDigest(outPath, packInfo))));
             Task.WaitAll(libTasks.ToArray());
-            using var outStream = FileUtils.OpenWrite(Path.Combine(outPath, "contentlibrary.dat"));
+            using var outStream = FileUtils.OpenWrite(Path.Combine(outPath, Internal.ContentLibrary.kFileName));
             var index = 0;
             lib.EnumeratePackages(packInfo => lib.SetPackageDigest(packInfo, libTasks[index++].Result));
             lib.Export(outStream);

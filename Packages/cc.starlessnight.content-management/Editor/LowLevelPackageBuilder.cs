@@ -142,7 +142,7 @@ namespace Iris.ContentManagement.Editor
 
         private void BuildContentLibrary()
         {
-            var outPath = Path.Combine(_settings.stagingPath, "Win64", "contentlibrary.dat");
+            var outPath = Path.Combine(_settings.stagingPath, "Win64", Internal.ContentLibrary.kFileName);
             using var outStream = FileUtils.OpenWrite(outPath);
             _lib.Export(outStream);
         }

@@ -23,6 +23,10 @@ namespace Iris.ContentManagement
 
             var cache = new Cache.FileCacheCollection();
             _storage = cache.Add<Cache.LocalStorage>();
+            if (options.useArtifacts)
+            {
+                cache.Add<Cache.ArtifactsFileCache>().Bind(options.artifactsPath);
+            }
             // 启用 StreamingAssets
             if (options.useStreamingAssets)
             {
@@ -30,7 +34,6 @@ namespace Iris.ContentManagement
             }
             if (options.useDownloader)
             {
-                Utility.SAssert.Debug(options.uriResolver != null);
                 _downloader = new Internal.Downloader(options.uriResolver);
             }
             var packageManager = new Internal.PackageManager(cache, _storage, _downloader);

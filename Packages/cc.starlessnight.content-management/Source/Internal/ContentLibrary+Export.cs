@@ -8,6 +8,8 @@ namespace Iris.ContentManagement.Internal
 
     public partial class ContentLibrary
     {
+        public const string kFileName = "contentlibrary.dat";
+        
 #if UNITY_EDITOR
         public void Export(Stream stream)
         {
