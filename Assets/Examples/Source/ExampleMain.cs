@@ -29,6 +29,8 @@ public class ExampleMain : MonoBehaviour
 
         //CASE 访问unity资源 
         var prefab = ContentSystem.GetAsset("Assets/Examples/Prefabs/Cube 1.prefab");
+        var prefab_copy1 = ContentSystem.GetAsset("Assets/Examples/Prefabs/Cube 1.prefab");
+        var prefab_copy2 = prefab;
         await prefab.LoadAsync();
 
         var instance = Object.Instantiate<UnityEngine.GameObject>(prefab);
@@ -42,6 +44,9 @@ public class ExampleMain : MonoBehaviour
         {
             Debug.LogErrorFormat("load nonexistent asset: {0}", nonexistence);
         }
+
+        Debug.Log(file != prefab && prefab != nonexistence ? "checked" : "failed");
+        Debug.Log(prefab == prefab_copy1 && prefab_copy1 == prefab_copy2 ? "checked" : "failed");
 
         ContentSystem.Shutdown();
     }

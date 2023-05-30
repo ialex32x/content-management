@@ -34,9 +34,9 @@ namespace Iris.ContentManagement
 
         public bool isCompleted => _asset == null || _asset.isCompleted;
 
-        public AssetHandle(IAsset asset) => _asset = asset;
+        internal AssetHandle(IAsset asset) => _asset = asset;
 
-        public T Load<T>() where T : class => (T)_asset?.Get();
+        public T Get<T>() where T : class => (T)_asset?.Get();
 
         public T Instantiate<T>() where T : UnityEngine.Object => _asset?.Get() is T obj ? UnityEngine.Object.Instantiate<T>(obj) : default;
 
@@ -52,7 +52,20 @@ namespace Iris.ContentManagement
 
         public override string ToString() => _asset != null ? _asset.ToString() : "None";
 
-        public static implicit operator UnityEngine.Object(AssetHandle handle) => handle.Load<UnityEngine.Object>();
-        public static implicit operator UnityEngine.GameObject(AssetHandle handle) => handle.Load<UnityEngine.GameObject>();
+        public static implicit operator UnityEngine.Object(AssetHandle handle) => handle.Get<UnityEngine.Object>();
+        public static implicit operator UnityEngine.GameObject(AssetHandle handle) => handle.Get<UnityEngine.GameObject>();
+
+
+        public bool Equals(AssetHandle other) => this == other;
+
+        public override bool Equals(object obj) => obj is AssetHandle other && this == other;
+
+        public override int GetHashCode() => _asset != null ? _asset.GetHashCode() : 0;
+
+        public static implicit operator string(AssetHandle a) => a.ToString();
+
+        public static bool operator ==(AssetHandle a, AssetHandle b) => a._asset == b._asset;
+
+        public static bool operator !=(AssetHandle a, AssetHandle b) => a._asset != b._asset;
     }
 }
