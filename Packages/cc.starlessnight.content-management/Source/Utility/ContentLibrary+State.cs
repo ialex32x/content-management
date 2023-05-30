@@ -1,7 +1,6 @@
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
-    using Iris.ContentManagement.Utility;
-    
+    using EPackageType = Internal.EPackageType;
     public partial class ContentLibrary
     {
         private readonly struct PackageState

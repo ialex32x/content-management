@@ -4,6 +4,7 @@ using System.IO;
 namespace Iris.ContentManagement.Internal
 {
     using Iris.ContentManagement.Utility;
+    using Net;
     using UnityEngine;
 
     public sealed partial class PackageManager

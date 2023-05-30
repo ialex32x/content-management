@@ -17,7 +17,7 @@ namespace Iris.ContentManagement.Editor
 
         private static byte[] GenerateBytes(string passphrase) => System.Security.Cryptography.MD5.Create().ComputeHash(System.Text.Encoding.UTF8.GetBytes(passphrase));
 
-        private static async Task EncryptStream(string inPath, string outPath, Internal.ContentLibrary.PackageInfo packInfo, string passphrase)
+        private static async Task EncryptStream(string inPath, string outPath, Utility.ContentLibrary.PackageInfo packInfo, string passphrase)
         {
             using var outStream = FileUtils.OpenWrite(Path.Combine(outPath, packInfo.name));
             using var inStream = File.OpenRead(Path.Combine(inPath, packInfo.name));
@@ -49,8 +49,8 @@ namespace Iris.ContentManagement.Editor
             var passphrase = "hello";
 
             Directory.CreateDirectory(outPath);
-            var lib = new Internal.ContentLibrary();
-            using var libStream = File.OpenRead(Path.Combine(inPath, Internal.ContentLibrary.kFileName));
+            var lib = new Utility.ContentLibrary();
+            using var libStream = File.OpenRead(Path.Combine(inPath, Utility.ContentLibrary.kFileName));
             var tasks = new List<Task>(lib.PackageCount);
             lib.Import(libStream);
             lib.EnumeratePackages(packInfo => tasks.Add(Task.Run(() => EncryptStream(inPath, outPath, packInfo, passphrase))));
@@ -60,13 +60,13 @@ namespace Iris.ContentManagement.Editor
             var libTasks = new List<Task<ContentDigest>>(lib.PackageCount);
             lib.EnumeratePackages(packInfo => libTasks.Add(Task.Run(() => UpdatePackageDigest(outPath, packInfo))));
             Task.WaitAll(libTasks.ToArray());
-            using var outStream = FileUtils.OpenWrite(Path.Combine(outPath, Internal.ContentLibrary.kFileName));
+            using var outStream = FileUtils.OpenWrite(Path.Combine(outPath, Utility.ContentLibrary.kFileName));
             var index = 0;
             lib.EnumeratePackages(packInfo => lib.SetPackageDigest(packInfo, libTasks[index++].Result));
             lib.Export(outStream);
         }
 
-        private async Task<ContentDigest> UpdatePackageDigest(string outPath, Internal.ContentLibrary.PackageInfo packageInfo)
+        private async Task<ContentDigest> UpdatePackageDigest(string outPath, Utility.ContentLibrary.PackageInfo packageInfo)
         {
             using var stream = File.OpenRead(Path.Combine(outPath, packageInfo.name));
             var checksum = await Utility.Checksum.ComputeChecksumAsync(stream);

@@ -2,10 +2,10 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
-    using Iris.ContentManagement.Utility;
-
+    using EPackageType = Internal.EPackageType;
+    
     public partial class ContentLibrary
     {
         public const string kFileName = "contentlibrary.dat";

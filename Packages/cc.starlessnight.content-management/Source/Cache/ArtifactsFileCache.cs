@@ -6,7 +6,7 @@ namespace Iris.ContentManagement.Cache
     internal class ArtifactsFileCache : IFileCache
     {
         private IFileSystem _fs;
-        private Internal.ContentLibrary _embed;
+        private Utility.ContentLibrary _embed;
 
         public ArtifactsFileCache()
         {
@@ -16,8 +16,8 @@ namespace Iris.ContentManagement.Cache
         {
             Utility.SAssert.Debug(!string.IsNullOrEmpty(path) && Directory.Exists(path));
             _fs = new Utility.OSFileSystem(path);
-            _embed = new Internal.ContentLibrary();
-            using var stream = _fs.OpenRead(Internal.ContentLibrary.kFileName);
+            _embed = new Utility.ContentLibrary();
+            using var stream = _fs.OpenRead(Utility.ContentLibrary.kFileName);
             _embed.Import(stream);
         }
 

@@ -30,7 +30,7 @@ namespace Iris.ContentManagement.Editor
 
         private List<IPackageSource> _assetBundles = new();
         private List<IPackageSource> _zipArchives = new();
-        private Iris.ContentManagement.Internal.ContentLibrary _lib = new();
+        private Iris.ContentManagement.Utility.ContentLibrary _lib = new();
 
         [MenuItem("UnityFS/LowLevel Package Test")]
         private static void RunTest()
@@ -142,7 +142,7 @@ namespace Iris.ContentManagement.Editor
 
         private void BuildContentLibrary()
         {
-            var outPath = Path.Combine(_settings.stagingPath, "Win64", Internal.ContentLibrary.kFileName);
+            var outPath = Path.Combine(_settings.stagingPath, "Win64", Utility.ContentLibrary.kFileName);
             using var outStream = FileUtils.OpenWrite(outPath);
             _lib.Export(outStream);
         }

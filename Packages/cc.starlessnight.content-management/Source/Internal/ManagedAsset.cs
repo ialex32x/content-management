@@ -14,10 +14,11 @@ namespace Iris.ContentManagement.Internal
             Invalid,
         }
 
-        private string _assetPath;
+        private readonly string _assetPath;
+        private readonly IPackage _package;
+        
         private EAssetState _state;
         private object _cached;
-        private IPackage _package;
         private SIndex _assetRequestHandlerIndex;
         private SList<IRequestHandler> _handlers = new();
 

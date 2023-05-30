@@ -8,16 +8,16 @@ namespace Iris.ContentManagement
         private IContentManager _contentManager;
         private IScheduler _scheduler;
         private Cache.LocalStorage _storage;
-        private Internal.IWebRequestQueue _downloader;
+        private Net.IDownloader _downloader;
 
         public static IScheduler Scheduler => _system._scheduler;
 
-        public static Internal.IWebRequestQueue Downloader => _system._downloader;
+        public static Net.IDownloader Downloader => _system._downloader;
 
         private ContentSystem(in StartupOptions options)
         {
             //TODO content library 的更新逻辑
-            var library = new Internal.ContentLibrary();
+            var library = new Utility.ContentLibrary();
 
             _scheduler = new Utility.DefaultScheduler();
 
@@ -34,7 +34,7 @@ namespace Iris.ContentManagement
             }
             if (options.useDownloader)
             {
-                _downloader = new Internal.Downloader(options.uriResolver);
+                _downloader = new Net.SimpleDownloader(options.uriResolver);
             }
             var packageManager = new Internal.PackageManager(cache, _storage, _downloader);
             _contentManager = new Internal.DownloadableContentManager(library, packageManager);

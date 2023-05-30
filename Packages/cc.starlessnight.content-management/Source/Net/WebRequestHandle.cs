@@ -1,5 +1,6 @@
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Net
 {
+    using Internal;
     using Iris.ContentManagement.Utility;
 
     public struct WebRequestHandle
@@ -7,13 +8,13 @@ namespace Iris.ContentManagement.Internal
         private SIndex _callback;
 
         private readonly WebRequestInfo _info;
-        private readonly IWebRequestQueue _downloader;
+        private readonly IDownloader _downloader;
 
         public WebRequestInfo info => _info;
 
         public bool isValid => _downloader != null ? _downloader.IsValidRequest(_info, _callback) : false;
 
-        internal WebRequestHandle(IWebRequestQueue downloader, in WebRequestInfo info, in SIndex callback)
+        internal WebRequestHandle(IDownloader downloader, in WebRequestInfo info, in SIndex callback)
         {
             _info = info;
             _downloader = downloader;

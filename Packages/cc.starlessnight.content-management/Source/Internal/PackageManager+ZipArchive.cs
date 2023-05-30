@@ -2,7 +2,7 @@ using System;
 
 namespace Iris.ContentManagement.Internal
 {
-    using Cache;
+    using Net;
     using Iris.ContentManagement.Utility;
 
     public sealed partial class PackageManager

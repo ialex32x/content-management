@@ -7,7 +7,7 @@ namespace Iris.ContentManagement.Internal
     {
 
         // forward read only (not supported by ZipStream)
-        internal class ManagedStream : IManagedStream
+        private class ManagedStream : IManagedStream
         {
             private PackageManager _packageManager;
             private SIndex _referenceIndex;

@@ -4,12 +4,13 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Net
 {
+    using Internal;
     using Cache;
     using Iris.ContentManagement.Utility;
 
-    public class Downloader : IWebRequestQueue
+    public class SimpleDownloader : IDownloader
     {
         private readonly int _mainThreadId;
         private readonly IUriResolver _uriResolver;
@@ -23,7 +24,7 @@ namespace Iris.ContentManagement.Internal
 
         public bool isCompleted => _activeRequests.Count == 0 && _waitingRequests.Count == 0;
 
-        public Downloader(IUriResolver uriResolver)
+        public SimpleDownloader(IUriResolver uriResolver)
         {
             Utility.SAssert.Debug(uriResolver != null);
             _uriResolver = uriResolver;
@@ -213,7 +214,7 @@ namespace Iris.ContentManagement.Internal
             private const int _recvNapTime = 250;
             private readonly WebRequestInfo _info;
             private readonly LocalStorage _storage;
-            private readonly Downloader _downloader;
+            private readonly SimpleDownloader _downloader;
 
             private volatile bool _isDone;
             private volatile bool _cancelled;
@@ -231,7 +232,7 @@ namespace Iris.ContentManagement.Internal
             public long requestedByteCount => _requestedByteCount;
             public long totalByteCount => _info.expectedSize;
 
-            public WebRequestImpl(Downloader downloader, LocalStorage storage, in WebRequestInfo info)
+            public WebRequestImpl(SimpleDownloader downloader, LocalStorage storage, in WebRequestInfo info)
             {
                 _downloader = downloader;
                 _storage = storage;

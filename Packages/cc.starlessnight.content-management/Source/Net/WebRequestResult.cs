@@ -1,5 +1,6 @@
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Net
 {
+    using Internal;
     public readonly struct WebRequestResult
     {
         public readonly bool isValid;

@@ -1,9 +1,10 @@
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Net
 {
+    using Internal;
     using Cache;
     using Iris.ContentManagement.Utility;
 
-    public interface IWebRequestQueue
+    public interface IDownloader
     {
         bool isCompleted { get; }
         

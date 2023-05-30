@@ -3,6 +3,7 @@ using System.Threading;
 
 namespace Iris.ContentManagement.Internal
 {
+    using Net;
     using Cache;
     using Utility;
 
@@ -14,10 +15,10 @@ namespace Iris.ContentManagement.Internal
         private bool _released;
         private IFileCache _fileCache;
         private LocalStorage _storage;
-        private IWebRequestQueue _downloader;
+        private IDownloader _downloader;
         private SList<IPackageSlot> _packages = new();
 
-        public PackageManager(IFileCache fileCache, LocalStorage storage, IWebRequestQueue downloader)
+        public PackageManager(IFileCache fileCache, LocalStorage storage, IDownloader downloader)
         {
             _mainThreadId = Thread.CurrentThread.ManagedThreadId;
             _released = false;
@@ -28,7 +29,6 @@ namespace Iris.ContentManagement.Internal
 
         internal PackageHandle CreatePackage(in ContentLibrary.PackageInfo packageInfo)
         {
-            Utility.SAssert.Debug(packageInfo.type == EPackageType.Zip);
             var index = _packages.Add(default);
             IPackageSlot slot = packageInfo.type == EPackageType.AssetBundle
                 ? new AssetBundleSlot(this, index, packageInfo.name, packageInfo.digest)

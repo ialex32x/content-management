@@ -5,14 +5,14 @@ namespace Iris.ContentManagement.Internal
 {
     public class DownloadableContentManager : IContentManager
     {
-        private ContentLibrary _library;
+        private Utility.ContentLibrary _library;
         private PackageManager _packageManager;
 
         private EdSimulatedPackage _defaultPackage;
         private Dictionary<string, WeakReference<ManagedPackage>> _cachedPackages = new();
         private Dictionary<string, WeakReference<IAsset>> _cachedAssets = new();
 
-        public DownloadableContentManager(ContentLibrary library, PackageManager packageManager)
+        public DownloadableContentManager(Utility.ContentLibrary library, PackageManager packageManager)
         {
             _library = library;
             _packageManager = packageManager;
@@ -31,9 +31,9 @@ namespace Iris.ContentManagement.Internal
             return _defaultPackage;
         }
 
-        private IPackage GetPackage(in ContentLibrary.EntryInfo entryInfo) => entryInfo.isValid ? GetPackage(entryInfo.package) : GetDefaultPackage();
+        private IPackage GetPackage(in Utility.ContentLibrary.EntryInfo entryInfo) => entryInfo.isValid ? GetPackage(entryInfo.package) : GetDefaultPackage();
 
-        private ManagedPackage GetPackage(in ContentLibrary.PackageInfo packageInfo)
+        private ManagedPackage GetPackage(in Utility.ContentLibrary.PackageInfo packageInfo)
         {
             if (!packageInfo.isValid)
             {

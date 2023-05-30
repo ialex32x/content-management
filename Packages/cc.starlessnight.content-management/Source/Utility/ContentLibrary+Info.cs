@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
-    using Iris.ContentManagement.Utility;
-
-    /// <summary>
-    /// 内容库 (最新版本信息)
-    /// </summary>
+    using EPackageType = Internal.EPackageType;
     public partial class ContentLibrary
     {
         public readonly struct PackageInfo : IEquatable<PackageInfo>
@@ -146,6 +142,11 @@ namespace Iris.ContentManagement.Internal
                     return list.ToArray();
                 }
             }
+
+            /// <summary>
+            /// parent directory
+            /// </summary>
+            public readonly DirectoryInfo parent => _db && _db._directories.TryGetValue(_index, out var state) ? new(_db, state.parent) : default;
 
             /// <summary>
             /// all sub-directoreis in this directory

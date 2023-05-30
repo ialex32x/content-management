@@ -6,7 +6,7 @@ namespace Iris.ContentManagement.Internal
 
     internal class EdSimulatedPackage : IPackage
     {
-        internal class ManagedStream : IManagedStream
+        private class ManagedStream : IManagedStream
         {
             public System.IO.Stream Open(string assetPath) => System.IO.File.OpenRead(assetPath);
 

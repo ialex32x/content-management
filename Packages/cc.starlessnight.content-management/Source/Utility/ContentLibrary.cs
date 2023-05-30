@@ -2,10 +2,9 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Iris.ContentManagement.Internal
+namespace Iris.ContentManagement.Utility
 {
-    using Iris.ContentManagement.Utility;
-
+    using EPackageType = Internal.EPackageType;
     //TODO entry guid 快速映射关系在外部实现, 如 FastEntryFinder
 
     /// <summary>
