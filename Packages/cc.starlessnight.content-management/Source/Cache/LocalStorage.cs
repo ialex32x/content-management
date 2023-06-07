@@ -577,7 +577,10 @@ namespace Iris.ContentManagement.Cache
 
             public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state) => _stream.BeginRead(buffer, offset, count, callback, state);
             public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state) => throw new NotSupportedException();
+
+#if NET_STANDARD_2_0
             public override void CopyTo(Stream destination, int bufferSize) => _stream.CopyTo(destination, bufferSize);
+#endif
             public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken) => _stream.CopyToAsync(destination, bufferSize, cancellationToken);
             public override int EndRead(IAsyncResult asyncResult) => _stream.EndRead(asyncResult);
             public override void EndWrite(IAsyncResult asyncResult) => throw new NotSupportedException();
